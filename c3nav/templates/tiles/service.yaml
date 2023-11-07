@@ -1,0 +1,23 @@
+{{- if .Values.tiles.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-tiles" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tiles
+spec:
+  type: {{ .Values.tiles.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.tiles.service.port }}
+      targetPort: http
+    {{- if .Values.tiles.metrics.enabled }}
+    - name: metrics
+      port: {{ .Values.tiles.metrics.service.port }}
+      targetPort: metrics
+    {{- end }}
+  selector:
+    {{- include "c3nav.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: tiles
+{{- end -}}

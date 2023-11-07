@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-workers" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: workers
+spec:
+  {{- if not .Values.workers.autoscaling.enabled }}
+  replicas: {{ .Values.workers.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "c3nav.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: workers
+  template:
+    metadata:
+      {{- with .Values.workers.podExtraAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "c3nav.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: workers
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      image.pullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.workers.podSecurityContext | nindent 8 }}
+      containers:
+        - name: c3nav-workers
+          securityContext:
+            {{- toYaml .Values.workers.securityContext | nindent 12 }}
+          image: {{ printf "%s/%s:%s" .Values.image.registry (default .Values.image.coreRepository .Values.image.workersRepository) (default .Chart.AppVersion .Values.image.tag) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["worker"]
+          resources:
+            {{- toYaml .Values.workers.resources | nindent 12 }}
+      {{- with .Values.workers.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workers.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.workers.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

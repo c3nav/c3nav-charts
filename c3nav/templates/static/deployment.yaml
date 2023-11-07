@@ -1,0 +1,116 @@
+{{- if .Values.static.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-static" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: static
+spec:
+  {{- if not .Values.static.autoscaling.enabled }}
+  replicas: {{ .Values.static.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "c3nav.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: static
+  template:
+    metadata:
+      {{- with .Values.static.podExtraAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "c3nav.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: static
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      image.pullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.static.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: c3nav-copy-static-files
+          securityContext:
+            {{- toYaml .Values.static.securityContext | nindent 12 }}
+          image: {{ printf "%s/%s:%s" .Values.image.registry .Values.image.coreRepository (default .Chart.AppVersion .Values.image.tag) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - cp -rp /app/c3nav/static.dist/ /static
+          volumeMounts:
+          - mountPath: /static
+            name: staticfiles
+      containers:
+        - name: nginx
+          securityContext:
+            {{- toYaml .Values.static.securityContext | nindent 12 }}
+          image: {{ printf "%s/%s:%s" .Values.static.image.registry .Values.static.image.repository .Values.static.image.tag }}
+          imagePullPolicy: {{ .Values.static.image.pullPolicy }}
+          env:
+            - name: BITNAMI_DEBUG
+              value: {{ .Values.c3nav.debug }}
+            - name: NGINX_HTTP_PORT_NUMBER
+              value: {{ .Values.static.service.port | quote }}
+          volumeMounts:
+          - mountPath: /app
+            name: staticfiles
+          ports:
+            - name: http
+              containerPort: {{ .Values.static.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.static.resources | nindent 12 }}
+        {{- if .Values.static.metrics.enabled }}
+        - name: metrics
+          image: {{ printf "%s/%s:%s" .Values.static.metrics.image.registry .Values.static.metrics.image.repository .Values.static.metrics.image.tag }}
+          imagePullPolicy: {{ .Values.static.metrics.image.pullPolicy | quote }}
+          {{- if .Values.static.metrics.securityContext.enabled }}
+          securityContext: {{- omit .Values.static.metrics.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          command: ['/usr/bin/exporter', '-nginx.scrape-uri', 'http://127.0.0.1:{{- default .Values.static.service.port .Values.static.metrics.port }}/status']
+          ports:
+            - name: metrics
+              containerPort: 9113
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          {{- if .Values.static.metrics.resources }}
+          resources: {{- toYaml .Values.static.metrics.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      volumes:
+        - name: staticfiles
+          emptyDir:
+            sizeLimit: 256Mi
+      {{- with .Values.static.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.static.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.static.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end -}}

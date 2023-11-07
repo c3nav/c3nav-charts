@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+metadata:
+  name: {{ printf "%s-post-upgrade" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ printf "%s-post-upgrade-migration" (include "c3nav.fullname" .) }}
+      labels:
+        {{- include "c3nav.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: c3nav-migrate
+        image: {{- printf "%s/%s:%s" .Values.image.registry .Values.image.coreRepository (default .Chart.AppVersion .Values.image.tag) -}}
+        args: ["manage", "migrate"]

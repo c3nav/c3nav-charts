@@ -1,0 +1,23 @@
+{{- if .Values.static.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-static" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: static
+spec:
+  type: {{ .Values.static.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.static.service.port }}
+      targetPort: http
+    {{- if .Values.static.metrics.enabled }}
+    - name: metrics
+      port: {{ .Values.static.metrics.service.port }}
+      targetPort: metrics
+    {{- end }}
+  selector:
+    {{- include "c3nav.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: static 
+{{- end -}}

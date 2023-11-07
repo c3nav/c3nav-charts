@@ -1,0 +1,81 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "c3nav.fullname" . -}}
+{{- $defaultHost := include "c3nav.defaultIngressHost" . -}}
+{{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+  annotations:
+  {{- if .Values.ingress.annotations }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+  {{- end }}
+  {{- if and (eq .Values.ingress.className "traefik") (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ printf "%s-%s" .Release.Namespace (include "c3nav.traeficBasicAuthMiddlewareName" .) }}@kubernetescrd"
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- if .Values.ingress.tlsConfig }}
+    {{- range .Values.ingress.tlsConfig }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+    {{- else }}
+    - hosts:
+        {{- range (default (tuple $defaultHost) .Values.ingress.hosts) }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ printf "%s-tls" $fullName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $host := (default (tuple $defaultHost) .Values.ingress.hosts) }}
+    - host: {{ $host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-core" $fullName }}
+                port:
+                  name: web
+          {{- if $.Values.tiles.enabled }}
+          - path: /map
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-tiles" $fullName }}
+                port:
+                  name: web
+          {{- end }}
+          {{- if and $.Values.static.enabled (hasPrefix "/" $.Values.c3nav.urls.static) }}
+          - path: {{ $.Values.c3nav.urls.static }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-static" $fullName }}
+                port:
+                  name: web
+          {{- end }}
+    {{- end }}
+{{- end }}

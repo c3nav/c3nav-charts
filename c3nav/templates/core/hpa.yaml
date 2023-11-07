@@ -1,0 +1,29 @@
+{{- if .Values.core.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "c3nav.fullname" . }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: core
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ printf "%s-core" (include "c3nav.fullname" .) }}
+  minReplicas: {{ .Values.core.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.core.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.core.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.core.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.core.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.core.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

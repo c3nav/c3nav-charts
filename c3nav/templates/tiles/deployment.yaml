@@ -1,0 +1,115 @@
+{{- if .Values.tiles.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-tiles" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tiles
+spec:
+  {{- if not .Values.tiles.autoscaling.enabled }}
+  replicas: {{ .Values.tiles.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "c3nav.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tiles
+  template:
+    metadata:
+      {{- with .Values.tiles.podExtraAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "c3nav.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: tiles
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      image.pullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.tiles.podSecurityContext | nindent 8 }}
+      containers:
+        - name: c3nav-tiles
+          securityContext:
+            {{- toYaml .Values.tiles.securityContext | nindent 12 }}
+          image: {{ printf "%s/%s:%s" .Values.image.registry (default .Values.image.coreRepository .Values.image.tilesRepository) (default .Chart.AppVersion .Values.image.tag) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: C3NAV_DEBUG
+              value: {{ .Values.c3nav.debug }}
+            - name: C3NAV_LOGLEVEL
+              value: {{ .Values.c3nav.loglevel }}
+            - name: C3NAV_DATA_DIR
+              value: /data
+            - name: C3NAV_CONFIG
+              value: /data/c3nav.cfg
+            - name: UWSGI_WORKERS
+              value: {{ .Values.tiles.uwsgiWorkers }}
+          args: ['web']
+          volumeMounts:
+            - name: c3nav-config
+              mountPath: /etc/c3nav/{{ if ne "c3nav.cfg" (include "c3nav.configSecretKey" .) }}c3nav.cfg{{ end }}
+              {{- if ne "c3nav.cfg" (include "c3nav.configSecretKey" .) }}
+              subPath: {{ include "c3nav.configSecretKey" . }}
+              {{- end }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.tiles.resources | nindent 12 }}
+        {{- if .Values.tiles.metrics.enabled }}
+        - name: metrics
+          image: {{ printf "%s/%s:%s" .Values.tiles.metrics.image.registry .Values.tiles.metrics.image.repository .Values.tiles.metrics.image.tag }}
+          imagePullPolicy: {{ .Values.tiles.metrics.image.pullPolicy | quote }}
+          {{- if .Values.tiles.metrics.securityContext.enabled }}
+          securityContext: {{- omit .Values.tiles.metrics.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          args: ['--stats.uri', 'http://127.0.0.1:5000/status']
+          ports:
+            - name: metrics
+              containerPort: 9117
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          {{- if .Values.tiles.metrics.resources }}
+          resources: {{- toYaml .Values.tiles.metrics.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      volumes:
+        - name: c3nav-config
+          secret:
+            name: {{ include "c3nav.configSecretName" . }}
+      {{- with .Values.tiles.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tiles.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tiles.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end -}}
