@@ -4,7 +4,7 @@ metadata:
   name: {{ printf "%s-core" (include "c3nav.fullname" .) }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
-    app.kubernetes.io/component: tiles
+    app.kubernetes.io/component: core
 spec:
   type: {{ .Values.core.service.type }}
   ports:
@@ -18,4 +18,4 @@ spec:
     {{- end }}
   selector:
     {{- include "c3nav.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: tiles
+    app.kubernetes.io/component: core

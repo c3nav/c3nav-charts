@@ -20,4 +20,4 @@ type: application
 version: 0.1.0
 
 # currently c3nav doens't have releases. Until this changes we use commit hashes as the app version.
-appVersion: "162da37c04be2dff3db23cd475556695ad91752f"
+appVersion: "809dd570fee335aa189dfa94c29f401c47745e85"
