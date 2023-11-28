@@ -57,6 +57,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "c3nav.secretName" . }}
                   key: {{ include "c3nav.memcachedKey" . }}
+            - name: C3NAV_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "c3nav.secretName" . }}
+                  key: {{ include "c3nav.redisPasswordKey" . }}
             - name: C3NAV_REDIS
               valueFrom:
                 secretKeyRef:

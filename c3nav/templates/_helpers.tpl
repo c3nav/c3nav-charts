@@ -317,7 +317,7 @@ The redis connection URL for django's caching framework
 */}}
 {{- define "c3nav.redisConnection" -}}
 {{- if (and .Values.redis.enabled (empty .Values.c3nav.redis.location)) -}}
-{{- printf "redis://:%s@%s-master:%v/0" (include "c3nav.redisPassword" .) (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- printf "redis://:%s@%s-master:%v/0" "${C3NAV_REDIS_PASSWORD}" (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
 {{- else }}
 {{- .Values.c3nav.redis.location -}}
 {{- end }}
@@ -336,7 +336,7 @@ The celery broker URL
 */}}
 {{- define "c3nav.celeryBroker" -}}
 {{- if (and .Values.redis.enabled (empty .Values.c3nav.celery.broker)) -}}
-{{- printf "redis://:%s@%s-master:%v/2" (include "redis.password" .redis) (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- printf "redis://:%s@%s-master:%v/2" "${C3NAV_REDIS_PASSWORD}" (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
 {{- else }}
 {{- .Values.c3nav.celery.broker -}}
 {{- end }}
@@ -354,7 +354,7 @@ The celery results backend URL
 */}}
 {{- define "c3nav.celeryBackend" -}}
 {{- if (and .Values.redis.enabled (empty .Values.c3nav.celery.backend)) -}}
-{{- printf "redis://:%s@%s-master:%v/1" (include "redis.password" .redis) (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- printf "redis://:%s@%s-master:%v/1" "${C3NAV_REDIS_PASSWORD}" (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
 {{- else }}
 {{- .Values.c3nav.celery.backend -}}
 {{- end }}
