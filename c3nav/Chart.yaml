@@ -4,13 +4,27 @@ description: c3nav - indoor navigation for events
 home: https://c3nav.de
 icon: https://c3nav.de/assets/helm/icon.png
 maintainers:
-  - name: c3nav team
-    url: https://github.com/c3nav/c3nav-charts
+  - name: Jenny Danzmayr
+    email: mail@evilscientress.de
 annotations:
   category: Webapps
   licenses: Apache-2.0
 sources:
   - "https://github.com/c3nav/c3nav-charts"
+dependencies:
+  - name: postgresql
+    version: 13.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: postgresql.enabled
+  - name: redis
+    version: 18.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: redis.enabled
+  - name: memcached
+    version: 6.x.x
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: memcached.enabled
+
 
 type: application
 

@@ -34,31 +34,34 @@ spec:
       initContainers:
         - name: c3nav-copy-static-files
           securityContext:
-            {{- toYaml .Values.static.securityContext | nindent 12 }}
-          image: {{ printf "%s/%s:%s" .Values.image.registry .Values.image.coreRepository (default .Chart.AppVersion .Values.image.tag) }}
+            {{- toYaml .Values.core.securityContext | nindent 12 }}
+          image: {{ include "c3nav.images.core" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - cp -rp /app/c3nav/static.dist/ /static
+            - cp -dr --preserve=timestamps /app/c3nav/static.dist/ /static/
           volumeMounts:
-          - mountPath: /static
-            name: staticfiles
+            - mountPath: /static
+              name: staticfiles
       containers:
         - name: nginx
           securityContext:
             {{- toYaml .Values.static.securityContext | nindent 12 }}
-          image: {{ printf "%s/%s:%s" .Values.static.image.registry .Values.static.image.repository .Values.static.image.tag }}
+          image: {{ include "c3nav.images.static" . }}
           imagePullPolicy: {{ .Values.static.image.pullPolicy }}
           env:
             - name: BITNAMI_DEBUG
               value: {{ .Values.c3nav.debug }}
             - name: NGINX_HTTP_PORT_NUMBER
-              value: {{ .Values.static.service.port | quote }}
+              value: "8080"
           volumeMounts:
-          - mountPath: /app
-            name: staticfiles
+            - mountPath: /app
+              name: staticfiles
+            - mountPath: /opt/bitnami/nginx/conf/nginx.conf
+              name: nginx-config
+              subPath: nginx.conf
           ports:
             - name: http
-              containerPort: {{ .Values.static.service.port }}
+              containerPort: "8080"
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -101,6 +104,9 @@ spec:
         - name: staticfiles
           emptyDir:
             sizeLimit: 256Mi
+        - name: nginx-config
+          configMap:
+            name: {{ printf "%s-static" (include "c3nav.fullname" .) }}
       {{- with .Values.static.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

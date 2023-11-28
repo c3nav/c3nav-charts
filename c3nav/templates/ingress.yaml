@@ -68,8 +68,8 @@ spec:
                 port:
                   name: web
           {{- end }}
-          {{- if and $.Values.static.enabled (hasPrefix "/" $.Values.c3nav.urls.static) }}
-          - path: {{ $.Values.c3nav.urls.static }}
+          {{- if and $.Values.static.enabled (hasPrefix "/" $.Values.c3nav.django.static_url) }}
+          - path: {{ $.Values.c3nav.django.static_url }}
             pathType: Prefix
             backend:
               service:

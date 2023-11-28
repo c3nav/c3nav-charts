@@ -1,0 +1,39 @@
+{{- if empty .Values.existingC3navConfigMap }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "c3nav.configMapName" . }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+stringData:
+  {{ include "c3nav.configKey" . }}: |2
+    {{- if .Values.c3navConfig }}
+    {{- .Values.c3navConfig | nindent 4 }}
+    {{- else }}
+    [c3nav]
+    {{- range $key, $value := omit .Values.c3nav "name" "debug" "loglevel" "memcached" "redis" }}
+    {{- if and $value (not (kindIs "map" $value)) }}
+    {{ include "c3nav.toIniLine" (dict "key" $key "value" $value "root" $) }}
+    {{- end }}
+    {{- end }}
+    [django]
+    {{- range $key, $value := omit .Values.c3nav.django "hosts" "secret" }}
+    {{- if and $value (not (kindIs "map" $value)) }}
+    {{ include "c3nav.toIniLine" (dict "key" $key "value" $value "root" $) }}
+    {{- end }}
+    {{- end }}
+    {{- range $sectionName, $section := omit .Values.c3nav "django" "database" "email" "memcached" "redis" "celery" }}
+    {{- if kindIs "map" $section }}
+    [{{ $sectionName }}]
+    {{- range $key, $value := $section }}
+    {{- if $value }}
+    {{ include "c3nav.toIniLine" (dict "key" $key "value" $value "root" $) }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.c3navConfigExtra }}
+    {{- .Values.c3nav.ConfigExtra | nindent 4 }}
+    {{- end }}
+    {{- end }}
+{{- end }}

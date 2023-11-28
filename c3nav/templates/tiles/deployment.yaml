@@ -35,8 +35,9 @@ spec:
         - name: c3nav-tiles
           securityContext:
             {{- toYaml .Values.tiles.securityContext | nindent 12 }}
-          image: {{ printf "%s/%s:%s" .Values.image.registry (default .Values.image.coreRepository .Values.image.tilesRepository) (default .Chart.AppVersion .Values.image.tag) }}
+          image: {{ include "c3nav.images.tiles" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ['web']
           env:
             - name: C3NAV_DEBUG
               value: {{ .Values.c3nav.debug }}
@@ -45,16 +46,23 @@ spec:
             - name: C3NAV_DATA_DIR
               value: /data
             - name: C3NAV_CONFIG
-              value: /data/c3nav.cfg
+              value: /etc/c3nav.cfg
+            - name: C3NAV_SECRET_FILE
+              value: /etc/c3nav.secret
+            - name: C3NAV_AUTOMIGRATE
+              value: "no"
             - name: UWSGI_WORKERS
               value: {{ .Values.tiles.uwsgiWorkers }}
-          args: ['web']
           volumeMounts:
             - name: c3nav-config
-              mountPath: /etc/c3nav/{{ if ne "c3nav.cfg" (include "c3nav.configSecretKey" .) }}c3nav.cfg{{ end }}
-              {{- if ne "c3nav.cfg" (include "c3nav.configSecretKey" .) }}
-              subPath: {{ include "c3nav.configSecretKey" . }}
-              {{- end }}
+              mountPath: /etc/c3nav/c3nav.cfg
+              subPath: {{ include "c3nav.configKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/django_secret
+              subPath: {{ include "c3nav.djangoSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav.tileSecretKey" . }}
           ports:
             - name: http
               containerPort: 8000
@@ -99,7 +107,10 @@ spec:
       volumes:
         - name: c3nav-config
           secret:
-            name: {{ include "c3nav.configSecretName" . }}
+            name: {{ include "c3nav.configMapName" . }}
+        - name: c3nav-secret
+          secret:
+            name: {{ include "c3nav.secretName" . }}
       {{- with .Values.tiles.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
