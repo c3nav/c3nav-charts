@@ -52,6 +52,14 @@ spec:
             - name: c3nav-secret
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
+          livenessProbe:
+            exec:
+              command:
+                - entrypoint
+                - worker_healthcheck
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 15
           resources:
             {{- toYaml .Values.workers.resources | nindent 12 }}
       volumes:
