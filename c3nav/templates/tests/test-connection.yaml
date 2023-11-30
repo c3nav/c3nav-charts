@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "c3nav.fullname" . }}:{{ .Values.core.service.port }}']
+      args: ['{{ printf "%s-core.%s.svc.%s" (include "c3nav.fullname" . ) .Release.Namespace .Values.clusterDomain }}:{{ .Values.core.service.port }}']
   restartPolicy: Never
