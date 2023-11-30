@@ -200,7 +200,7 @@ The database host
 */}}
 {{- define "c3nav.databaseHost" -}}
 {{- if and (empty .Values.c3nav.database.host) .Values.postgresql.enabled }}
-{{- (include "c3nav.subchart.fullname" (dict "chart" "postgresql" "Values" .Values.postgresql "Release" .Release)) }}
+{{- printf "%s.%s.svc.%s" (include "c3nav.subchart.fullname" (dict "chart" "postgresql" "Values" .Values.postgresql "Release" .Release)) .Release.Namespace .Values.clusterDomain }}
 {{- if eq .Values.postgresql.architecture "replication"}}
 {{- printf "-%s" ((default dict .Values.postgresql.primary).name | default "primary") }}
 {{- end }}
@@ -274,7 +274,7 @@ The memcached connection URL for django's caching framework
 */}}
 {{- define "c3nav.memcachedConnection" -}}
 {{- if (and .Values.memcached.enabled (empty .Values.c3nav.memcached.location)) -}}
-{{- printf "%s:%v" (include "c3nav.subchart.fullname" (dict "chart" "memcached" "Values" .Values.memcached "Release" .Release)) (.Values.memcached.service.ports.memcache | default "11211") -}}
+{{- printf "%s.%s.svc.%s:%v" (include "c3nav.subchart.fullname" (dict "chart" "memcached" "Values" .Values.memcached "Release" .Release)) .Release.Namespace .Values.clusterDomain (.Values.memcached.service.ports.memcache | default "11211") -}}
 {{- else}}
 {{- .Values.c3nav.memcached.location -}}
 {{- end }}
@@ -303,7 +303,9 @@ The redis password
 {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "c3nav.secretName" . )) | default dict }}
 {{- $secretData := (get $secretObj "data") | default dict }}
 {{- /* use to existing secret data or generate a random one when it doesn't exists */}}
-{{- get $secretData (include "c3nav.redisPasswordKey" . ) | b64dec | default (randAlphaNum 16) -}}
+{{- $password := get $secretData (include "c3nav.redisPasswordKey" . ) | b64dec | default (randAlphaNum 16) -}}
+{{- $_ := set .Values.redis.auth "password" $password -}}
+{{- $password -}}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -317,11 +319,18 @@ The key containing the redis connection URL
 {{- end }}
 
 {{/*
+The base redis URL without a database
+*/}}
+{{- define "c3nav.redisBaseURL" -}}
+{{- printf "redis://:%s@%s-master.%s.svc.%s:%v" ( include "c3nav.redisPassword" . ) (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) .Release.Namespace .Values.clusterDomain (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- end }}
+
+{{/*
 The redis connection URL for django's caching framework
 */}}
 {{- define "c3nav.redisConnection" -}}
 {{- if (and .Values.redis.enabled (empty .Values.c3nav.redis.location)) -}}
-{{- printf "redis://:%s@%s-master:%v/0" "${C3NAV_REDIS_PASSWORD}" (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- printf "%s/0" (include "c3nav.redisBaseURL" . ) }}
 {{- else }}
 {{- .Values.c3nav.redis.location -}}
 {{- end }}
@@ -340,7 +349,7 @@ The celery broker URL
 */}}
 {{- define "c3nav.celeryBroker" -}}
 {{- if (and .Values.redis.enabled (empty .Values.c3nav.celery.broker)) -}}
-{{- printf "redis://:%s@%s-master:%v/2" "${C3NAV_REDIS_PASSWORD}" (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- printf "%s/2" (include "c3nav.redisBaseURL" . ) }}
 {{- else }}
 {{- .Values.c3nav.celery.broker -}}
 {{- end }}
@@ -358,7 +367,7 @@ The celery results backend URL
 */}}
 {{- define "c3nav.celeryBackend" -}}
 {{- if (and .Values.redis.enabled (empty .Values.c3nav.celery.backend)) -}}
-{{- printf "redis://:%s@%s-master:%v/1" "${C3NAV_REDIS_PASSWORD}" (include "c3nav.subchart.fullname" (dict "chart" "redis" "Values" .Values.redis "Release" .Release)) (.Values.redis.master.service.ports.redis | default 6379) -}}
+{{- printf "%s/1" (include "c3nav.redisBaseURL" . ) }}
 {{- else }}
 {{- .Values.c3nav.celery.backend -}}
 {{- end }}
