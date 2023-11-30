@@ -5,7 +5,7 @@ metadata:
   name: {{ include "c3nav.configMapName" . }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
-stringData:
+data:
   {{ include "c3nav.configKey" . }}: |2
     {{- if .Values.c3navConfig }}
     {{- .Values.c3navConfig | nindent 4 }}
