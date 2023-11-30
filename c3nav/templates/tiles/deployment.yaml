@@ -1,11 +1,12 @@
 {{- if .Values.tiles.enabled -}}
+{{ $component := "tiles" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ printf "%s-tiles" (include "c3nav.fullname" .) }}
+  name: {{ printf "%s-%s" (include "c3nav.fullname" .) $component }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
-    app.kubernetes.io/component: tiles
+    app.kubernetes.io/component: {{ $component }}
 spec:
   {{- if not .Values.tiles.autoscaling.enabled }}
   replicas: {{ .Values.tiles.replicaCount }}
@@ -13,7 +14,7 @@ spec:
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: tiles
+      app.kubernetes.io/component: {{ $component }}
   template:
     metadata:
       {{- with .Values.tiles.podExtraAnnotations }}
@@ -22,7 +23,7 @@ spec:
       {{- end }}
       labels:
         {{- include "c3nav.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: tiles
+        app.kubernetes.io/component: {{ $component }}
     spec:
       {{- with .Values.image.pullSecrets }}
       image.pullSecrets:
@@ -39,23 +40,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ['web']
           env:
-            - name: C3NAV_DEBUG
-              value: {{ .Values.c3nav.debug }}
-            - name: C3NAV_LOGLEVEL
-              value: {{ .Values.c3nav.loglevel }}
-            - name: C3NAV_DATA_DIR
-              value: /data
-            - name: C3NAV_CONFIG
-              value: /etc/c3nav.cfg
-            - name: C3NAV_SECRET_FILE
-              value: /etc/c3nav.secret
-            - name: C3NAV_AUTOMIGRATE
-              value: "no"
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
             - name: UWSGI_WORKERS
-              value: {{ .Values.tiles.uwsgiWorkers }}
+              value: {{ .Values.tiles.uwsgiWorkers | quote }}
           volumeMounts:
             - name: c3nav-config
-              mountPath: /etc/c3nav/c3nav.cfg
+              mountPath: {{ include "c3nav.configPath" . | quote }}
               subPath: {{ include "c3nav.configKey" . }}
             - name: c3nav-secret
               mountPath: /etc/c3nav/django_secret
@@ -106,11 +98,11 @@ spec:
         {{- end }}
       volumes:
         - name: c3nav-config
-          secret:
+          configMap:
             name: {{ include "c3nav.configMapName" . }}
         - name: c3nav-secret
           secret:
-            name: {{ include "c3nav.secretName" . }}
+            secretName: {{ include "c3nav.secretName" . }}
       {{- with .Values.tiles.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

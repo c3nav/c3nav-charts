@@ -50,7 +50,7 @@ spec:
           imagePullPolicy: {{ .Values.static.image.pullPolicy }}
           env:
             - name: BITNAMI_DEBUG
-              value: {{ .Values.c3nav.debug }}
+              value: {{ .Values.c3nav.debug | quote }}
             - name: NGINX_HTTP_PORT_NUMBER
               value: "8080"
           volumeMounts:

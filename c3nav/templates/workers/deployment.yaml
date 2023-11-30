@@ -1,10 +1,11 @@
+{{ $component := "workers" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ printf "%s-workers" (include "c3nav.fullname" .) }}
+  name: {{ printf "%s-%s" (include "c3nav.fullname" .) $component }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
-    app.kubernetes.io/component: workers
+    app.kubernetes.io/component: {{ $component }}
 spec:
   {{- if not .Values.workers.autoscaling.enabled }}
   replicas: {{ .Values.workers.replicaCount }}
@@ -12,7 +13,7 @@ spec:
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: workers
+      app.kubernetes.io/component: {{ $component }}
   template:
     metadata:
       {{- with .Values.workers.podExtraAnnotations }}
@@ -21,7 +22,7 @@ spec:
       {{- end }}
       labels:
         {{- include "c3nav.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: workers
+        app.kubernetes.io/component: {{ $component }}
     spec:
       {{- with .Values.image.pullSecrets }}
       image.pullSecrets:
@@ -37,8 +38,29 @@ spec:
           image: {{ printf "%s/%s:%s" .Values.image.registry (default .Values.image.coreRepository .Values.image.workersRepository) (default .Chart.AppVersion .Values.image.tag) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["worker"]
+          env:
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
+          volumeMounts:
+            - name: c3nav-config
+              mountPath: {{ include "c3nav.configPath" . | quote }}
+              subPath: {{ include "c3nav.configKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/django_secret
+              subPath: {{ include "c3nav.djangoSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav.tileSecretKey" . }}
           resources:
             {{- toYaml .Values.workers.resources | nindent 12 }}
+      volumes:
+        - name: c3nav-config
+          configMap:
+            name: {{ include "c3nav.configMapName" . }}
+        - name: c3nav-secret
+          secret:
+            secretName: {{ include "c3nav.secretName" . }}
       {{- with .Values.workers.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -1,10 +1,11 @@
+{{ $component := "core" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ printf "%s-core" (include "c3nav.fullname" .) }}
+  name: {{ printf "%s-%s" (include "c3nav.fullname" .) $component }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
-    app.kubernetes.io/component: core
+    app.kubernetes.io/component: {{ $component }}
 spec:
   {{- if not .Values.core.autoscaling.enabled }}
   replicas: {{ .Values.core.replicaCount }}
@@ -12,7 +13,7 @@ spec:
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: core
+      app.kubernetes.io/component: {{ $component }}
   template:
     metadata:
       {{- with .Values.core.podExtraAnnotations }}
@@ -21,7 +22,7 @@ spec:
       {{- end }}
       labels:
         {{- include "c3nav.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: core
+        app.kubernetes.io/component: {{ $component }}
     spec:
       {{- with .Values.image.pullSecrets }}
       image.pullSecrets:
@@ -38,78 +39,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ['{{ if .Values.static.enabled }}web{{ else }}webstatic{{ end }}']
           env:
-            - name: C3NAV_DEBUG
-              value: {{ .Values.c3nav.debug | quote }}
-            - name: C3NAV_LOGLEVEL
-              value: {{ .Values.c3nav.loglevel | quote }}
-            - name: C3NAV_DATA_DIR
-              value: /data
-            - name: C3NAV_CONFIG
-              value: {{ include "c3nav.configPath" . | quote }}
-            - name: C3NAV_AUTOMIGRATE
-              value: "no"
-            - name: C3NAV_DJANGO_SECRET_FILE
-              value: /etc/c3nav/django_secret
-            - name: C3NAV_TILE_SECRET_FILE
-              value: /etc/c3nav/tile_secret
-            - name: C3NAV_MEMCACHED
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ include "c3nav.memcachedKey" . }}
-            - name: C3NAV_REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ include "c3nav.redisPasswordKey" . }}
-            - name: C3NAV_REDIS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ include "c3nav.redisKey" . }}
-            - name: C3NAV_CELERY_BROKER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ include "c3nav.celeryBrokerKey" . }}
-            - name: C3NAV_CELERY_BACKEND
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ include "c3nav.celeryBackendKey" . }}
-            - name: C3NAV_DATABASE_BACKEND
-              value: {{ include "c3nav.configValue" .Values.c3nav.database.backend | quote }}
-            - name: C3NAV_DATABASE_NAME
-              value: {{ include "c3nav.databaseName" . }}
-            - name: C3NAV_DATABASE_USER
-              value: {{ include "c3nav.databaseUser" . }}
-            - name: C3NAV_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.databaseSecretName" . }}
-                  key: {{ include "c3nav.databasePasswordKey" . }}
-            - name: C3NAV_DATABASE_HOST
-              value: {{ include "c3nav.databaseHost" . }}
-            - name: C3NAV_DATABASE_PORT
-              value: {{ include "c3nav.databasePort" . }}
-            {{- range $key, $value := omit .Values.c3nav.email "user" "password" "url" }}
-            {{- if $value }}
-            - name: C3NAV_EMAIL_{{ upper $key }}
-              value: {{ include "c3nav.configValue" $value | quote }}
-            {{- end }}
-            {{- end }}
-            - name: C3NAV_EMAIL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ .Values.emailUserKey }}
-            - name: C3NAV_EMAIL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "c3nav.secretName" . }}
-                  key: {{ .Values.emailPasswordKey }}
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
             - name: UWSGI_WORKERS
-              value: {{ .Values.core.uwsgiWorkers }}
+              value: {{ .Values.core.uwsgiWorkers | quote }}
           volumeMounts:
             - name: c3nav-config
               mountPath: {{ include "c3nav.configPath" . | quote }}
@@ -167,7 +101,7 @@ spec:
             name: {{ include "c3nav.configMapName" . }}
         - name: c3nav-secret
           secret:
-            name: {{ include "c3nav.secretName" . }}
+            secretName: {{ include "c3nav.secretName" . }}
       {{- with .Values.core.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

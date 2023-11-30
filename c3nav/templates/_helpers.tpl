@@ -446,6 +446,101 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+The environment variables shared by all c3nav containers, except of the static container
+*/}}
+{{- define "c3nav.commonEnvVars" -}}
+- name: K8S_POD_NAME
+  valueFrom:
+    fieldRef:
+      apiVersion: v1
+      fieldPath: metadata.name
+- name: K8S_POD_NAMESPACE
+  valueFrom:
+    fieldRef:
+      apiVersion: v1
+      fieldPath: metadata.namespace
+- name: K8S_POD_IP
+  valueFrom:
+    fieldRef:
+      apiVersion: v1
+      fieldPath: status.podIP
+- name: C3NAV_DEBUG
+  value: {{ .Values.c3nav.debug | quote }}
+- name: C3NAV_LOGLEVEL
+  value: {{ .Values.c3nav.loglevel | quote }}
+- name: C3NAV_DATA_DIR
+  value: "/data"
+- name: C3NAV_CONFIG
+  value: {{ include "c3nav.configPath" . | quote }}
+- name: C3NAV_AUTOMIGRATE
+  value: "no"
+- name: C3NAV_DJANGO_SECRET_FILE
+  value: "/etc/c3nav/django_secret"
+- name: C3NAV_TILE_SECRET_FILE
+  value: "/etc/c3nav/tile_secret"
+- name: C3NAV_DJANGO_ALLOWED_HOSTS
+  value: {{ printf "%s,%s" (include "c3nav.allowedHosts" . ) (include "c3nav.allowedHostsRuntime" . ) | quote }}
+- name: C3NAV_MEMCACHED
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ include "c3nav.memcachedKey" . }}
+- name: C3NAV_REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ include "c3nav.redisPasswordKey" . }}
+- name: C3NAV_REDIS
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ include "c3nav.redisKey" . }}
+- name: C3NAV_CELERY_BROKER
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ include "c3nav.celeryBrokerKey" . }}
+- name: C3NAV_CELERY_BACKEND
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ include "c3nav.celeryBackendKey" . }}
+- name: C3NAV_DATABASE_BACKEND
+  value: {{ include "c3nav.configValue" .Values.c3nav.database.backend | quote }}
+- name: C3NAV_DATABASE_NAME
+  value: {{ include "c3nav.databaseName" . | quote }}
+- name: C3NAV_DATABASE_USER
+  value: {{ include "c3nav.databaseUser" . | quote }}
+- name: C3NAV_DATABASE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.databaseSecretName" . | quote }}
+      key: {{ include "c3nav.databasePasswordKey" . | quote }}
+- name: C3NAV_DATABASE_HOST
+  value: {{ include "c3nav.databaseHost" . | quote }}
+- name: C3NAV_DATABASE_PORT
+  value: {{ include "c3nav.databasePort" . | quote }}
+{{- range $key, $value := omit .Values.c3nav.email "user" "password" "url" }}
+{{- if $value }}
+- name: C3NAV_EMAIL_{{ upper $key }}
+  value: {{ include "c3nav.configValue" $value | quote }}
+{{- end }}
+{{- end }}
+- name: C3NAV_EMAIL_USER
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ .Values.emailUserKey }}
+      optional: true
+- name: C3NAV_EMAIL_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.secretName" . }}
+      key: {{ .Values.emailPasswordKey }}
+      optional: true
+{{- end -}}
+
+{{/*
 Convert a config value to a string, correctly serializing lists
 */}}
 {{- define "c3nav.configValue" -}}
