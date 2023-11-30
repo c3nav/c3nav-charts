@@ -38,7 +38,12 @@ spec:
           image: {{ include "c3nav.images.core" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - cp -dr --preserve=timestamps /app/c3nav/static.dist/ /static/
+            - "-O"
+            - "dotglob"
+            - "--"
+            - |
+              cp -Lr --preserve=timestamps /app/c3nav/static.dist /static/
+              mv /static/static.dist /static/static
           volumeMounts:
             - mountPath: /static
               name: staticfiles
@@ -61,16 +66,18 @@ spec:
               subPath: nginx.conf
           ports:
             - name: http
-              containerPort: "8080"
+              containerPort: 8080
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /static/CACHE/manifest.json
               port: http
+            initialDelaySeconds: 5
           readinessProbe:
             httpGet:
-              path: /
+              path: /static/CACHE/manifest.json
               port: http
+            initialDelaySeconds: 5
           resources:
             {{- toYaml .Values.static.resources | nindent 12 }}
         {{- if .Values.static.metrics.enabled }}
