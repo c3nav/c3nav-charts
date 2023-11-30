@@ -26,7 +26,7 @@ spec:
         app.kubernetes.io/component: {{ $component }}
     spec:
       {{- with .Values.image.pullSecrets }}
-      image.pullSecrets:
+      imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "c3nav.serviceAccountName" . }}

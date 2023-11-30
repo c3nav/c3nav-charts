@@ -24,8 +24,8 @@ spec:
         {{- include "c3nav.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: static
     spec:
-      {{- with .Values.image.pullSecrets }}
-      image.pullSecrets:
+      {{- with .Values.static.image.pullSecrets }}
+      imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
