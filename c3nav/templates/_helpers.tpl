@@ -362,6 +362,21 @@ The celery results backend URL
 
 
 {{/*
+The key containing the email (SMTP) username
+*/}}
+{{- define "c3nav.emailUserKey" -}}
+{{- .Values.emailUserKey | default "email_user" -}}
+{{- end }}
+
+{{/*
+The key containing the email (SMTP) password
+*/}}
+{{- define "c3nav.emailPasswordKey" -}}
+{{- .Values.emailPasswordKey | default "email_password" -}}
+{{- end }}
+
+
+{{/*
 Create the default hostname for the ingress
 */}}
 {{- define "c3nav.defaultIngressHost" -}}

@@ -183,7 +183,7 @@ celeryBackendKey: "celery_backend"
 # the key containing the email (SMTP) username
 emailUserKey: "email_user"
 # the key containing the email (SMTP) password
-emailPasswordKey: "email_username"
+emailPasswordKey: "email_password"
 
 # use an existing secret for the database secret
 existingDatabaseSecret: ""
