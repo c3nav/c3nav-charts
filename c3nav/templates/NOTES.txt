@@ -1,7 +1,9 @@
+{{- $defaultHosts := (include "c3nav.domains" . ) | splitList "," -}}
+{{- $hosts := concat (.Values.ingress.hosts | default $defaultHosts) .Values.ingress.additionalHosts -}}
 1. Get the application URL by running these commands:
 {{- if .Values.ingress.enabled }}
 No commands needed, your instance should be up and running and reachable at:
-{{- range $host := (default (tuple (include "c3nav.defaultIngressHost" .)) .Values.ingress.hosts) }}
+{{- range $host := $hosts }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host }}
 {{- end }}
 {{- else if contains "NodePort" .Values.core.service.type }}

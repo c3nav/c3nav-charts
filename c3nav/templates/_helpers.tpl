@@ -379,8 +379,37 @@ The key containing the email (SMTP) password
 {{/*
 Create the default hostname for the ingress
 */}}
-{{- define "c3nav.defaultIngressHost" -}}
+{{- define "c3nav.defaultDomain" -}}
 {{- printf "%s.c3nav.de" .Release.Name -}}
+{{- end }}
+
+{{/*
+The domains/hostname this instance is for
+*/}}
+{{- define "c3nav.domains" -}}
+{{- if not (empty .Values.domains )}}
+{{ join "," .Values.domains }}
+{{- else }}
+{{- include "c3nav.defaultDomain" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+The django allowed hosts based on the domains or c3nav.django.allowed_hosts setting
+*/}}
+{{- define "c3nav.allowedHosts" -}}
+{{- if not (empty .Values.c3nav.django.allowed_hosts )}}
+{{- join "," .Values.c3nav.django.allowed_hosts }}
+{{- else }}
+{{- include "c3nav.domains" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+The django allowed hosts added at runtime with the help of other environment variables
+*/}}
+{{- define "c3nav.allowedHostsRuntime" -}}
+$(K8S_SERVICE_NAME).$(K8S_POD_NAMESPACE),$(K8S_SERVICE_NAME).$(K8S_POD_NAMESPACE).svc.cluster.local,localhost,$(K8S_POD_IP),127.0.0.1,::1
 {{- end }}
 
 {{/*

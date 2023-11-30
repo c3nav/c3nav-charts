@@ -1,6 +1,8 @@
 {{- if .Values.ingress.enabled -}}
 {{- $fullName := include "c3nav.fullname" . -}}
-{{- $defaultHost := include "c3nav.defaultIngressHost" . -}}
+{{- $defaultHost := include "c3nav.defaultDomain" . -}}
+{{- $defaultHosts := (include "c3nav.domains" . ) | splitList "," -}}
+{{- $hosts := concat (.Values.ingress.hosts | default $defaultHosts) .Values.ingress.additionalHosts -}}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
@@ -41,14 +43,12 @@ spec:
     {{- end }}
     {{- else }}
     - hosts:
-        {{- range (default (tuple $defaultHost) .Values.ingress.hosts) }}
-        - {{ . | quote }}
-        {{- end }}
+        {{- toYaml $hosts | nindent 8 }}
       secretName: {{ printf "%s-tls" $fullName }}
     {{- end }}
   {{- end }}
   rules:
-    {{- range $host := (default (tuple $defaultHost) .Values.ingress.hosts) }}
+    {{- range $host := $hosts }}
     - host: {{ $host | quote }}
       http:
         paths:
