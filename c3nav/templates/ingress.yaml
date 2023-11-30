@@ -58,7 +58,7 @@ spec:
               service:
                 name: {{ printf "%s-core" $fullName }}
                 port:
-                  name: web
+                  name: http
           {{- if $.Values.tiles.enabled }}
           - path: /map
             pathType: Prefix
@@ -66,7 +66,7 @@ spec:
               service:
                 name: {{ printf "%s-tiles" $fullName }}
                 port:
-                  name: web
+                  name: http
           {{- end }}
           {{- if and $.Values.static.enabled (hasPrefix "/" $.Values.c3nav.django.static_url) }}
           - path: {{ $.Values.c3nav.django.static_url }}
@@ -75,7 +75,7 @@ spec:
               service:
                 name: {{ printf "%s-static" $fullName }}
                 port:
-                  name: web
+                  name: http
           {{- end }}
     {{- end }}
 {{- end }}
