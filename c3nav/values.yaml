@@ -215,7 +215,7 @@ image:
 
 # c3nav core service
 core:
-  uwsgiWorkers: 8
+  uwsgiWorkers: 4
 
   extraEnv: []
 
@@ -395,7 +395,7 @@ tiles:
   # deploy seperate pod(s) for tile rendering. If set to false the core will take care of it.
   enabled: false
 
-  uwsgiWorkers: 8
+  uwsgiWorkers: 4
 
   extraEnv: []
 
