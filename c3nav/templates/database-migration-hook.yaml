@@ -1,17 +1,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ printf "%s-post-install" (include "c3nav.fullname" .) }}
+  name: {{ printf "%s-db-migration" (include "c3nav.fullname" .) }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "-5"
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   template:
     metadata:
-      name: {{ printf "%s-post-install-migration" (include "c3nav.fullname" .) }}
+      name: {{ printf "%s-db-migration" (include "c3nav.fullname" .) }}
       labels:
         {{- include "c3nav.selectorLabels" . | nindent 8 }}
     spec:
@@ -34,8 +34,6 @@ spec:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
-            - name: UWSGI_WORKERS
-              value: {{ .Values.core.uwsgiWorkers | quote }}
           volumeMounts:
             - name: c3nav-config
               mountPath: {{ include "c3nav.configPath" . | quote }}
