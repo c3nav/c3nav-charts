@@ -662,8 +662,8 @@ postgresql:
   auth:
     # defaults to c3nav-{{ .Release.Name }}
     database: "{{ printf \"c3nav-%s\" .Release.Name }}"
-    # defaults to c3nav-{{ .Release.Name }}
-    username: "{{ printf \"c3nav-%s\" .Release.Name }}"
+    # defaults to c3nav because it's not processed as a template
+    username: c3nav
 
 redis:
   enabled: true

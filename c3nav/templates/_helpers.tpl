@@ -188,7 +188,11 @@ The database name
 The database user
 */}}
 {{- define "c3nav.databaseUser" -}}
+{{- if and (empty .Values.c3nav.database.user) .Values.postgresql.enabled }}
+{{- .Values.postgresql.auth.username }}
+{{- else }}
 {{- .Values.c3nav.database.user | default (printf "c3nav-%s" .Release.Name) -}}
+{{- end }}
 {{- end }}
 
 {{/*
