@@ -223,6 +223,8 @@ core:
 
   podSecurityContext:
     runAsNonRoot: true
+    runAsUser: 500
+    runAsGroup: 500
     fsGroup: 500
     fsGroupChangePolicy: OnRootMismatch
 
@@ -331,8 +333,10 @@ workers:
 
   podSecurityContext:
     runAsNonRoot: true
-    fsGroupChangePolicy: OnRootMismatch
+    runAsUser: 500
+    runAsGroup: 500
     fsGroup: 500
+    fsGroupChangePolicy: OnRootMismatch
 
   securityContext: {}
     # capabilities:
@@ -399,6 +403,8 @@ tiles:
 
   podSecurityContext:
     runAsNonRoot: true
+    runAsUser: 500
+    runAsGroup: 500
     fsGroup: 500
     fsGroupChangePolicy: OnRootMismatch
 
@@ -517,6 +523,8 @@ static:
 
   podSecurityContext:
     runAsNonRoot: true
+    runAsUser: 500
+    runAsGroup: 0
     fsGroup: 500
     fsGroupChangePolicy: OnRootMismatch
 
