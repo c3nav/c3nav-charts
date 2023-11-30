@@ -61,12 +61,42 @@ spec:
         - name: c3nav-secret
           secret:
             secretName: {{ include "c3nav.secretName" . }}
+      affinity:
+      {{- if .Values.workers.affinity }}
+        {{- toYaml .Values.workers.affinity | nindent 8 }}
+      {{- else }}
+        {{- if .Values.workers.podAntiAffinityPreset }}
+        podAntiAffinity:
+          {{- if eq .Values.workers.podAntiAffinityPreset "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          {{- end }}
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "c3nav.selectorLabels" . | nindent 20 }}
+                    app.kubernetes.io/component: {{ $component }}
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        {{- end }}
+        {{- if and (not (empty .Values.workers.nodeAffinityPreset.type)) (not (empty .Values.workers.nodeAffinityPreset.key)) (not (empty .Values.workers.nodeAffinityPreset.values)) }}
+        nodeAffinity:
+          {{- if eq .Values.workers.nodeAffinityPreset.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulungIgnoredDuringExecution:
+          {{- end }}
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: {{ .Values.workers.nodeAffinityPreset.key }}
+                    operator: In
+                    values:
+                      {{- toYaml .Values.workers.nodeAffinityPreset.values | nindent 22 }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.workers.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.workers.affinity }}
-      affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.workers.tolerations }}

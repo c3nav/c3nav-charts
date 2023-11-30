@@ -107,12 +107,42 @@ spec:
         - name: nginx-config
           configMap:
             name: {{ printf "%s-static" (include "c3nav.fullname" .) }}
+      affinity:
+      {{- if .Values.static.affinity }}
+        {{- toYaml . | nindent 8 }}
+      {{- else }}
+        {{- if .Values.static.podAntiAffinityPreset }}
+        podAntiAffinity:
+          {{- if eq .Values.static.podAntiAffinityPreset "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          {{- end }}
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "c3nav.selectorLabels" . | nindent 20 }}
+                    app.kubernetes.io/component: static
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        {{- end }}
+        {{- if and (not (empty .Values.static.nodeAffinityPreset.type)) (not (empty .Values.static.nodeAffinityPreset.key)) (not (empty .Values.static.nodeAffinityPreset.values)) }}
+        nodeAffinity:
+          {{- if eq .Values.static.nodeAffinityPreset.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulungIgnoredDuringExecution:
+          {{- end }}
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: {{ .Values.static.nodeAffinityPreset.key }}
+                    operator: In
+                    values:
+                      {{- toYaml .Values.static.nodeAffinityPreset.values | nindent 22 }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.static.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.static.affinity }}
-      affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.static.tolerations }}
