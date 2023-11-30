@@ -63,10 +63,14 @@ spec:
             httpGet:
               path: /
               port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
               port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             {{- toYaml .Values.tiles.resources | nindent 12 }}
         {{- if .Values.tiles.metrics.enabled }}
@@ -84,14 +88,14 @@ spec:
             httpGet:
               path: /metrics
               port: metrics
-            initialDelaySeconds: 15
-            timeoutSeconds: 5
+            initialDelaySeconds: 5
+            periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /metrics
               port: metrics
             initialDelaySeconds: 5
-            timeoutSeconds: 1
+            periodSeconds: 30
           {{- if .Values.tiles.metrics.resources }}
           resources: {{- toYaml .Values.tiles.metrics.resources | nindent 12 }}
           {{- end }}
