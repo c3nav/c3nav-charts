@@ -52,6 +52,10 @@ spec:
             - name: c3nav-secret
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: data
+              mountPath: {{ .Values.core.persistence.mountPath | quote }}
+            - name: cache
+              mountPath: /cache
           livenessProbe:
             exec:
               command:
@@ -69,6 +73,12 @@ spec:
         - name: c3nav-secret
           secret:
             secretName: {{ include "c3nav.secretName" . }}
+        - name: data
+          emptyDir:
+            sizeLimit: 4Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 1Gi
       affinity:
       {{- if .Values.workers.affinity }}
         {{- toYaml .Values.workers.affinity | nindent 8 }}

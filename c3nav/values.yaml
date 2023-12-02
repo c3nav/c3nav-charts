@@ -261,6 +261,19 @@ core:
     #   cpu: 100m
     #   memory: 128Mi
   
+  persistence:
+    enabled: true
+    nameOverride: ""
+    existingClaim: ""
+    mountPath: /data
+    subPath: ""
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+    annotations: {}
+    labels: {}
+
   metrics:
     ## Start a Prometheus exporter sidecar container for the core pod(s)
     enabled: false

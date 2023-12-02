@@ -426,6 +426,17 @@ $(K8S_SERVICE_NAME).$(K8S_POD_NAMESPACE),$(K8S_SERVICE_NAME).$(K8S_POD_NAMESPACE
 {{- end }}
 
 {{/*
+The name of the PVC for the core pod
+*/}}
+{{- define "c3nav.core.pvcName" -}}
+{{- if .Values.core.persistence.existingClaim }}
+{{- .Values.core.persistence.existingClaim }}
+{{- else }}
+{{- .Values.core.persistence.nameOverride | default ( printf "%s-data" (include "c3nav.fullname" .)) }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create the name of the traefik basic auth middleware
 */}}
 {{- define "c3nav.traeficBasicAuthMiddlewareName" -}}
@@ -481,10 +492,12 @@ The environment variables shared by all c3nav containers, except of the static c
   value: {{ .Values.c3nav.debug | quote }}
 - name: C3NAV_LOGLEVEL
   value: {{ .Values.c3nav.loglevel | quote }}
-- name: C3NAV_DATA_DIR
-  value: "/data"
 - name: C3NAV_CONFIG
   value: {{ include "c3nav.configPath" . | quote }}
+- name: C3NAV_DATA_DIR
+  value: {{ .Values.core.persistence.mountPath | quote }}
+- name: C3NAV_CACHE_ROOT
+  value: "/cache"
 - name: C3NAV_AUTOMIGRATE
   value: "no"
 - name: C3NAV_DJANGO_SECRET_FILE

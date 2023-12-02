@@ -10,6 +10,10 @@ spec:
   {{- if not .Values.core.autoscaling.enabled }}
   replicas: {{ .Values.core.replicaCount }}
   {{- end }}
+  {{- if and .Values.core.persistence.enabled (has "ReadWriteOnce" .Values.core.persistence.accessModes) }}
+  strategy:
+    type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}
@@ -54,6 +58,13 @@ spec:
             - name: c3nav-secret
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: data
+              mountPath: {{ .Values.core.persistence.mountPath | quote }}
+              {{- if and .Values.core.persistence.enabled .Values.core.persistence.subPath }}
+              subPath: {{ .Values.core.persistence.subPath | quote }}
+              {{- end }}
+            - name: cache
+              mountPath: /cache
           ports:
             - name: http
               containerPort: 8000
@@ -106,6 +117,17 @@ spec:
         - name: c3nav-secret
           secret:
             secretName: {{ include "c3nav.secretName" . }}
+        - name: data
+          {{- if .Values.core.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "c3nav.core.pvcName" . }}
+          {{- else }}
+          emptyDir:
+            sizeLimit: 4Gi
+          {{- end }}
+        - name: cache
+          emptyDir:
+            sizeLimit: 1Gi
       affinity:
       {{- if .Values.core.affinity }}
         {{- toYaml .Values.core.affinity | nindent 8 }}
