@@ -41,7 +41,7 @@ spec:
             {{- toYaml .Values.core.securityContext | nindent 12 }}
           image: {{ include "c3nav.images.core" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ['{{ if .Values.static.enabled }}web{{ else }}webstatic{{ end }}']
+          args: ['{{ if .Values.static.enabled }}web{{ else }}webstatic{{ end }}{{ if eq .Values.core.mode "asgi" }}-async{{ end }}']
           env:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
@@ -83,7 +83,7 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.core.resources | nindent 12 }}
-        {{- if .Values.core.metrics.enabled }}
+        {{- if and .Values.core.metrics.enabled (eq .Values.core.mode "wsgi")}}
         - name: metrics
           image: {{ include "c3nav.images.core_metrics" . }}
           imagePullPolicy: {{ .Values.core.metrics.image.pullPolicy | quote }}

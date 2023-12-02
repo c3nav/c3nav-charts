@@ -215,6 +215,7 @@ image:
 
 # c3nav core service
 core:
+  mode: wsgi
   uwsgiWorkers: 4
 
   extraEnv: []
