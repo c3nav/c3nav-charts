@@ -415,7 +415,7 @@ The key containing the email (SMTP) password
 Create the default hostname for the ingress
 */}}
 {{- define "c3nav.defaultDomain" -}}
-{{- printf "%s.c3nav.de" .Release.Name -}}
+{{- printf "%s.c3nav.de" (.Values.c3nav.name | default .Release.Name) -}}
 {{- end }}
 
 {{/*
