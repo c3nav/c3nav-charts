@@ -131,6 +131,28 @@ The django secret
 {{- end }}
 
 {{/*
+The key containing the mesh secret
+*/}}
+{{- define "c3nav.meshSecretKey" -}}
+{{- .Values.meshSecretKey | default "mesh_secret" -}}
+{{- end }}
+
+{{/*
+The mesh secret
+*/}}
+{{- define "c3nav.meshSecret" -}}
+{{- if .Values.c3nav.mesh_secret }}
+{{- .Values.c3nav.mesh_secret }}
+{{- else }}
+{{- /* retrieve the secret data using lookup function and when not exists, return an empty dictionary / map as result */}}
+{{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "c3nav.secretName" . )) | default dict }}
+{{- $secretData := (get $secretObj "data") | default dict }}
+{{- /* use to existing secret data or generate a random one when it doesn't exists */}}
+{{- get $secretData (include "c3nav.meshSecretKey" . ) | b64dec | default (randAlphaNum 32) -}}
+{{- end }}
+{{- end }}
+
+{{/*
 The key containing the tile secret
 */}}
 {{- define "c3nav.tileSecretKey" -}}
@@ -504,6 +526,8 @@ The environment variables shared by all c3nav containers, except of the static c
   value: "/etc/c3nav/django_secret"
 - name: C3NAV_TILE_SECRET_FILE
   value: "/etc/c3nav/tile_secret"
+- name: C3NAV_MESH_SECRET_FILE
+  value: "/etc/c3nav/mesh_secret"
 - name: C3NAV_DJANGO_ALLOWED_HOSTS
   value: {{ printf "%s,%s" (include "c3nav.allowedHosts" . ) (include "c3nav.allowedHostsRuntime" . ) | quote }}
 - name: C3NAV_MEMCACHED

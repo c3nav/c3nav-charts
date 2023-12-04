@@ -53,6 +53,9 @@ spec:
               mountPath: /etc/c3nav/django_secret
               subPath: {{ include "c3nav.djangoSecretKey" . }}
             - name: c3nav-secret
+              mountPath: /etc/c3nav/mesh_secret
+              subPath: {{ include "c3nav.meshSecretKey" . }}
+            - name: c3nav-secret
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data

@@ -55,6 +55,9 @@ c3nav:
   # grid_rows
   # grid_cols
 
+  # mesh_secret is the secret for the mesh network
+  mesh_secret: ""
+
   # tile_secret is the secret for signing authorization data passed to the tile servers. If left empty it's automatically generated.
   tile_secret: ""
   # tile_cache_server is the hostname of the external tileserver(s) to use. If empty the internal one is used.
@@ -168,6 +171,8 @@ existingC3navSecret: ""
 overrideC3navSecretName: ""
 # the key containing the django secret in the c3nav secret
 djangoSecretKey: "django_secret"
+# the key containing the mesh secret in the c3nav secret
+meshSecretKey: "mesh_secret"
 # the key containing the tile secret in the c3nav secret
 tileSecretKey: "tile_secret"
 # the key containing the memcached connection string in the c3nav secret
