@@ -86,3 +86,9 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+  podFailurePolicy:
+    rules:
+      - action: FailJob
+        onExitCodes:
+          operator: NotIn
+          values: [0]
