@@ -609,8 +609,21 @@ Convert a key / value pair to a config line for the c3nav.cfg ini file
 {{- define "c3nav.toIniLine" -}}
 {{- if kindIs "slice" .value }}
 {{- .key }}={{ range .value }}{{ . }},{{ end }}
+{{- else if kindIs "bool" .value }}
+{{- .key }}={{ ternary "true" "false" .value }}
 {{- else }}
 {{- .key }}={{ tpl .value $.root }}
+{{- end }}
+{{- end }}
+
+{{/*
+Convert a mapping to a section for the c3nav.cfg ini file
+*/}}
+{{- define "c3nav.toIniSection" -}}
+{{- range $key, $value := .section -}}
+{{- if and (or (kindIs "bool" $value) (not (empty $value))) (not (kindIs "map" $value)) }}
+{{- include "c3nav.toIniLine" (dict "key" $key "value" $value "root" $.root) }}
+{{ end }}
 {{- end }}
 {{- end }}
 
