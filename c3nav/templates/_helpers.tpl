@@ -530,6 +530,8 @@ The environment variables shared by all c3nav containers, except of the static c
   value: "/etc/c3nav/mesh_secret"
 - name: C3NAV_DJANGO_ALLOWED_HOSTS
   value: {{ printf "%s,%s" (include "c3nav.allowedHosts" . ) (include "c3nav.allowedHostsRuntime" . ) | quote }}
+- name: C3NAV_DJANGO_REVERSE_PROXY
+  value: "true"
 - name: C3NAV_MEMCACHED
   valueFrom:
     secretKeyRef:
