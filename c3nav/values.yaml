@@ -233,6 +233,8 @@ core:
     runAsGroup: 500
     fsGroup: 500
     fsGroupChangePolicy: OnRootMismatch
+    seLinuxOptions:
+      level: "s0:c1001"
 
   securityContext: {}
     # capabilities:
@@ -343,6 +345,8 @@ workers:
     runAsGroup: 500
     fsGroup: 500
     fsGroupChangePolicy: OnRootMismatch
+    seLinuxOptions:
+      level: "s0:c1001"
 
   securityContext: {}
     # capabilities:
@@ -421,6 +425,8 @@ tiles:
     # readOnlyRootFilesystem: true
     # runAsNonRoot: true
     # runAsUser: 1000
+    # seLinuxOptions:
+    #   level: "s0:c1001"
 
   service:
     type: ClusterIP
