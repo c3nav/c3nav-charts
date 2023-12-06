@@ -3,6 +3,15 @@
 {{- $defaultHost := include "c3nav.defaultDomain" . -}}
 {{- $defaultHosts := (include "c3nav.domains" . ) | splitList "," -}}
 {{- $hosts := concat (.Values.ingress.hosts | default $defaultHosts) .Values.ingress.additionalHosts -}}
+{{- $traefik_middlewares := (index .Values.ingress.annotations "traefik.ingress.kubernetes.io/router.middlewares") -}}
+{{- $traefik_auth_middleware := printf "%s-%s@kubernetescrd" .Release.Namespace (include "c3nav.traeficBasicAuthMiddlewareName" .) -}}
+{{- if and (eq .Values.ingress.className "traefik") (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) }}
+  {{- if empty $traefik_middlewares }}
+    {{- $_ := set .Values.ingress.annotations "traefik.ingress.kubernetes.io/router.middlewares" $traefik_auth_middleware }}
+  {{- else }}
+    {{- $_ := set .Values.ingress.annotations "traefik.ingress.kubernetes.io/router.middlewares" (printf "%s,%s" $traefik_auth_middleware $traefik_middlewares) }}
+  {{- end }}
+{{- end }}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
   {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
@@ -23,9 +32,6 @@ metadata:
   annotations:
   {{- if .Values.ingress.annotations }}
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
-  {{- end }}
-  {{- if and (eq .Values.ingress.className "traefik") (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) }}
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ printf "%s-%s" .Release.Namespace (include "c3nav.traeficBasicAuthMiddlewareName" .) }}@kubernetescrd"
   {{- end }}
 spec:
   {{- if .Values.ingress.className }}
