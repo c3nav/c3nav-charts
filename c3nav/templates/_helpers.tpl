@@ -448,13 +448,13 @@ $(K8S_SERVICE_NAME).$(K8S_POD_NAMESPACE),$(K8S_SERVICE_NAME).$(K8S_POD_NAMESPACE
 {{- end }}
 
 {{/*
-The name of the PVC for the core pod
+The name of the PVC for the data dir
 */}}
-{{- define "c3nav.core.pvcName" -}}
-{{- if .Values.core.persistence.existingClaim }}
-{{- .Values.core.persistence.existingClaim }}
+{{- define "c3nav.pvcName" -}}
+{{- if .Values.persistence.existingClaim }}
+{{- .Values.persistence.existingClaim }}
 {{- else }}
-{{- .Values.core.persistence.nameOverride | default ( printf "%s-data" (include "c3nav.fullname" .)) }}
+{{- .Values.persistence.nameOverride | default ( printf "%s-data" (include "c3nav.fullname" .)) }}
 {{- end }}
 {{- end }}
 
@@ -517,7 +517,7 @@ The environment variables shared by all c3nav containers, except of the static c
 - name: C3NAV_CONFIG
   value: {{ include "c3nav.configPath" . | quote }}
 - name: C3NAV_DATA_DIR
-  value: {{ .Values.core.persistence.mountPath | quote }}
+  value: {{ .Values.persistence.mountPath | quote }}
 - name: C3NAV_CACHE_ROOT
   value: "/cache"
 - name: C3NAV_AUTOMIGRATE

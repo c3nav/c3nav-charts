@@ -1,0 +1,20 @@
+{{- if and .Values.persistence.enabled (empty .Values.persistence.existingClaim) -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "c3nav.pvcName" . }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    {{- toYaml .Values.persistence.labels | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.persistence.annotations | nindent 4 }}
+spec:
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+  accessModes:
+    {{- toYaml .Values.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size | quote }}
+{{- end -}}

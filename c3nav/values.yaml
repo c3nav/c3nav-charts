@@ -266,19 +266,6 @@ core:
     # requests:
     #   cpu: 100m
     #   memory: 128Mi
-  
-  persistence:
-    enabled: true
-    nameOverride: ""
-    existingClaim: ""
-    mountPath: /data
-    subPath: ""
-    storageClass: ""
-    accessModes:
-      - ReadWriteOnce
-    size: 8Gi
-    annotations: {}
-    labels: {}
 
   metrics:
     ## Start a Prometheus exporter sidecar container for the core pod(s)
@@ -674,6 +661,29 @@ ingress:
   # override the name of the basice auth middleware
   basicAuthMiddlewareNameOverride: ""
 
+# persistent storage for the data directory
+persistence:
+  # enable persistent storage for the data dir
+  enabled: true
+  # override the name of the created PVC
+  nameOverride: ""
+  # provide the name of an existing PVC to use
+  existingClaim: ""
+  # mount point in the container for the PVC. Don't change this unless you know what you are doing
+  mountPath: /data
+  # sub path in the PVC to mount
+  subPath: ""
+  # storage class of the created PVC
+  storageClass: ""
+  # access mode for the volume. If it is set to ReadWriteOnce only the core pod will use the PVC and the update strategy will change to replace for it. If it is set to ReadWriteMany all pods will use the PVC
+  accessModes:
+    - ReadWriteOnce
+  # size of the created PVC
+  size: 10Gi
+  # additional annotations for the PVC
+  annotations: {}
+  # additional labels for the PVC
+  labels: {}
 
 postgresql:
   enabled: true

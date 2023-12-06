@@ -10,7 +10,7 @@ spec:
   {{- if not .Values.core.autoscaling.enabled }}
   replicas: {{ .Values.core.replicaCount }}
   {{- end }}
-  {{- if and .Values.core.persistence.enabled (has "ReadWriteOnce" .Values.core.persistence.accessModes) }}
+  {{- if and .Values.persistence.enabled (has "ReadWriteOnce" .Values.persistence.accessModes) }}
   strategy:
     type: Recreate
   {{- end }}
@@ -62,9 +62,9 @@ spec:
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data
-              mountPath: {{ .Values.core.persistence.mountPath | quote }}
-              {{- if and .Values.core.persistence.enabled .Values.core.persistence.subPath }}
-              subPath: {{ .Values.core.persistence.subPath | quote }}
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+              {{- if and .Values.persistence.enabled .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath | quote }}
               {{- end }}
             - name: cache
               mountPath: /cache
@@ -125,9 +125,9 @@ spec:
           secret:
             secretName: {{ include "c3nav.secretName" . }}
         - name: data
-          {{- if .Values.core.persistence.enabled }}
+          {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ include "c3nav.core.pvcName" . }}
+            claimName: {{ include "c3nav.pvcName" . }}
           {{- else }}
           emptyDir:
             sizeLimit: 4Gi

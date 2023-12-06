@@ -45,7 +45,7 @@ spec:
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data
-              mountPath: {{ .Values.core.persistence.mountPath | quote }}
+              mountPath: {{ .Values.persistence.mountPath | quote }}
             - name: cache
               mountPath: /cache
       volumes:

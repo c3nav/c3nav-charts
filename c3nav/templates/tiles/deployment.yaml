@@ -59,7 +59,10 @@ spec:
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data
-              mountPath: {{ .Values.core.persistence.mountPath | quote }}
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+              {{- if and .Values.persistence.enabled (has "ReadWriteMany" .Values.persistence.accessModes) .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath | quote }}
+              {{- end }}
             - name: cache
               mountPath: /cache
           ports:
@@ -119,8 +122,13 @@ spec:
           secret:
             secretName: {{ include "c3nav.secretName" . }}
         - name: data
+          {{- if and .Values.persistence.enabled (has "ReadWriteMany" .Values.persistence.accessModes) }}
+          persistentVolumeClaim:
+            claimName: {{ include "c3nav.pvcName" . }}
+          {{- else }}
           emptyDir:
             sizeLimit: 4Gi
+          {{- end }}
         - name: cache
           emptyDir:
             sizeLimit: 1Gi
