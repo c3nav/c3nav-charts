@@ -5,9 +5,11 @@ metadata:
   name: {{ include "c3nav.pvcName" . }}
   labels:
     {{- include "c3nav.labels" . | nindent 4 }}
-    {{- toYaml .Values.persistence.labels | nindent 4 }}
+    {{- if .Values.persistence.labels }}{{ toYaml .Values.persistence.labels | nindent 4 }}{{ end }}
+  {{- if .Values.persistence.annotations }}
   annotations:
     {{- toYaml .Values.persistence.annotations | nindent 4 }}
+  {{- end }}
 spec:
   {{- if .Values.persistence.storageClass }}
   storageClassName: {{ .Values.persistence.storageClass }}
