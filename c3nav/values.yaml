@@ -417,6 +417,8 @@ tiles:
     runAsGroup: 500
     fsGroup: 500
     fsGroupChangePolicy: OnRootMismatch
+    seLinuxOptions:
+      level: "s0:c1001"
 
   securityContext: {}
     # capabilities:
