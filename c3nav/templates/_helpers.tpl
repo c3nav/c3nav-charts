@@ -518,8 +518,9 @@ The environment variables shared by all c3nav containers, except of the static c
   value: {{ include "c3nav.configPath" . | quote }}
 - name: C3NAV_DATA_DIR
   value: {{ .Values.persistence.mountPath | quote }}
+{{- /*  # disable ephemeral cache dir as we currently need data from it to be shared between nodes
 - name: C3NAV_CACHE_ROOT
-  value: "/cache"
+  value: "/cache" */}}
 - name: C3NAV_AUTOMIGRATE
   value: "no"
 - name: C3NAV_DJANGO_SECRET_FILE
