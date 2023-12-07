@@ -16,10 +16,11 @@ spec:
       app.kubernetes.io/component: {{ $component }}
   template:
     metadata:
-      {{- with .Values.workers.podExtraAnnotations }}
       annotations:
+        kubectl.kubernetes.io/default-container: c3nav-workers
+        {{- with .Values.workers.podExtraAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "c3nav.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: {{ $component }}
