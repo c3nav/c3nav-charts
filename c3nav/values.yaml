@@ -220,7 +220,7 @@ image:
 
 # c3nav core service
 core:
-  mode: wsgi
+  mode: asgi
   uwsgiWorkers: 4
 
   extraEnv: []
@@ -405,6 +405,7 @@ tiles:
   # deploy seperate pod(s) for tile rendering. If set to false the core will take care of it.
   enabled: false
 
+  mode: asgi
   uwsgiWorkers: 4
 
   extraEnv: []

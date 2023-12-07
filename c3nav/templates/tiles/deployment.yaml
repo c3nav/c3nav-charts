@@ -38,7 +38,7 @@ spec:
             {{- toYaml .Values.tiles.securityContext | nindent 12 }}
           image: {{ include "c3nav.images.tiles" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ['web']
+          args: ['web{{ if eq .Values.tiles.mode "asgi" }}-async{{ end }}']
           env:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
@@ -87,7 +87,7 @@ spec:
             failureThreshold: 5
           resources:
             {{- toYaml .Values.tiles.resources | nindent 12 }}
-        {{- if .Values.tiles.metrics.enabled }}
+        {{- if and .Values.tiles.metrics.enabled (eq .Values.tiles.mode "wsgi")}}
         - name: metrics
           image: {{ printf "%s/%s:%s" .Values.tiles.metrics.image.registry .Values.tiles.metrics.image.repository .Values.tiles.metrics.image.tag }}
           imagePullPolicy: {{ .Values.tiles.metrics.image.pullPolicy | quote }}
