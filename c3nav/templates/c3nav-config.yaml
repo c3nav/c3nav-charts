@@ -13,7 +13,7 @@ data:
     [c3nav]
     {{- include "c3nav.toIniSection" (dict "section" (omit .Values.c3nav "name" "debug" "loglevel" "memcached" "redis" "mesh_secret" "tile_secret") "root" $) | nindent 4 }}
     [django]
-    {{- include "c3nav.toIniSection" (dict "section" (omit .Values.c3nav "hosts" "secret") "root" $) | nindent 4 }}
+    {{- include "c3nav.toIniSection" (dict "section" (omit .Values.c3nav.django "hosts" "secret") "root" $) | nindent 4 }}
     {{- range $sectionName, $section := omit .Values.c3nav "django" "database" "email" "memcached" "redis" "celery" }}
     {{- if kindIs "map" $section }}
     [{{ $sectionName }}]
