@@ -11,7 +11,7 @@ spec:
     - name: http
       port: {{ .Values.core.service.port }}
       targetPort: http
-    {{- if .Values.core.metrics.enabled }}
+    {{- if and .Values.core.metrics.enabled (eq .Values.core.mode "wsgi") }}
     - name: metrics
       port: {{ .Values.core.metrics.service.port }}
       targetPort: metrics

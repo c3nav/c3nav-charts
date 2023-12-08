@@ -91,7 +91,7 @@ spec:
             failureThreshold: 5
           resources:
             {{- toYaml .Values.core.resources | nindent 12 }}
-        {{- if and .Values.core.metrics.enabled (eq .Values.core.mode "wsgi")}}
+        {{- if and .Values.core.metrics.enabled (eq .Values.core.mode "wsgi") }}
         - name: metrics
           image: {{ include "c3nav.images.core_metrics" . }}
           imagePullPolicy: {{ .Values.core.metrics.image.pullPolicy | quote }}
