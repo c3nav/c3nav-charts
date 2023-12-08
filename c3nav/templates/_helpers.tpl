@@ -596,6 +596,12 @@ The environment variables shared by all c3nav containers, except of the static c
       name: {{ include "c3nav.secretName" . }}
       key: {{ .Values.emailPasswordKey }}
       optional: true
+- name: PGDATABASE
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "c3nav.databaseSecretName" . | quote }}
+      key: uri
+      optional: true
 {{- end -}}
 
 {{/*
