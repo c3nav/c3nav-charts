@@ -129,7 +129,7 @@ spec:
             name: {{ printf "%s-static" (include "c3nav.fullname" .) }}
       affinity:
       {{- if .Values.static.affinity }}
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml .Values.static.affinity | nindent 8 }}
       {{- else }}
         {{- if .Values.static.podAntiAffinityPreset }}
         podAntiAffinity:

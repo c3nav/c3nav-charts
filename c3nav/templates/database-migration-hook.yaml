@@ -61,7 +61,7 @@ spec:
           emptyDir: {}
       affinity:
       {{- if .Values.core.affinity }}
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml .Values.core.affinity | nindent 8 }}
       {{- else }}
         {{- if and (not (empty .Values.core.nodeAffinityPreset.type)) (not (empty .Values.core.nodeAffinityPreset.key)) (not (empty .Values.core.nodeAffinityPreset.values)) }}
         nodeAffinity:
