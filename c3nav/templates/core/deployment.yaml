@@ -22,6 +22,8 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: c3nav-core
+        checksum/config: {{ include (print $.Template.BasePath "/c3nav-config.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/c3nav-secret.yaml") . | sha256sum }}
         {{- with .Values.core.podExtraAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
