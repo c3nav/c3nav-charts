@@ -144,6 +144,15 @@ c3nav:
     # celery backend url. Will be autopopulated if left empty and bundled redis is used.
     backend:
 
+  # sentry config
+  sentry:
+    # The Sentry DSN
+    dsn: ""
+    # The Sentry DSN for the js api
+    js_dsn: ""
+    # wether to inject the sentry client into the js
+    inject_js: False
+
 # The domains used for this c3nav instance.
 # Defaults to {{ .Release.Name }}.c3nav.de if unset
 domains: []
