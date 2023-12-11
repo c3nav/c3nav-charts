@@ -51,6 +51,9 @@ spec:
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
             - name: UWSGI_WORKERS
               value: {{ .Values.core.uwsgiWorkers | quote }}
+            {{- if .Values.core.extraEnv }}
+            {{- .Values.core.extraEnv | toYaml | nindent 12 }}
+            {{- end }}
           volumeMounts:
             - name: c3nav-config
               mountPath: {{ include "c3nav.configPath" . | quote }}
@@ -101,6 +104,10 @@ spec:
           securityContext: {{- omit .Values.core.metrics.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
           args: ['--stats.uri', 'http://127.0.0.1:5000/status']
+          {{- if .Values.core.metrics.extraEnv }}
+          env:
+            {{- .Values.core.metrics.extraEnv | toYaml | nindent 12 }}
+          {{- end }}
           ports:
             - name: metrics
               containerPort: 9117

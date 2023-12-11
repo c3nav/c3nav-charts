@@ -64,6 +64,9 @@ spec:
               value: {{ .Values.c3nav.debug | quote }}
             - name: NGINX_HTTP_PORT_NUMBER
               value: "8080"
+            {{- if .Values.static.extraEnv }}
+            {{- .Values.static.extraEnv | toYaml | nindent 12 }}
+            {{- end }}
           volumeMounts:
             - mountPath: /app
               name: staticfiles
@@ -101,6 +104,10 @@ spec:
             - http://127.0.0.1:{{- .Values.static.metrics.port | default "8080" }}/status
             - -nginx.retries
             - "10"
+          {{- if .Values.static.metrics.extraEnv }}
+          env:
+            {{- .Values.static.metrics.extraEnv | toYaml | nindent 12 }}
+          {{- end }}
           ports:
             - name: metrics
               containerPort: 9113
