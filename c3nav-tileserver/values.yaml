@@ -1,0 +1,231 @@
+# Default values for c3nav-tileserver.
+# This is a YAML-formatted file.
+
+# common parameters
+
+nameOverride: ""
+fullnameOverride: ""
+
+
+# c3nav settings to generate a c3nav.cfg file from.
+# Most of the following settings will be ignored if c3navConfig or existingC3navConfigMap is set.
+c3nav:
+  # name is the instance name and defaults to .Release.Name if unspecified
+  name: ""
+
+  # debug enables the debug mode of all c3nav components
+  debug: false
+  # loglevel controls the loglevel of all c3nav components
+  loglevel: info
+
+  # reload interval of the tileserver
+  reloadInterval: 60
+
+  # tile_secret is the secret for signing authorization data passed to the tile servers. Must be set unless existingSecret is used.
+  tile_secret: ""
+
+  # upstream base url (this must be set)
+  upstreamBaseURL: ""
+
+  # upstream http auth
+  httpAuth:
+    username: ""
+    password: ""
+
+  # number of uwsgi workers
+  uwsgiWorkers: 4
+
+  # extra environment variables
+  extraEnv: []
+
+
+# The domains used for the tile-servers.
+# Defaults to tiles.{{ .Release.Name }}.c3nav.de if unset
+tileserverDomains: []
+
+
+# use an existing secret for the deployment
+existingSecret: ""
+# override the name of the secret created for this deployment
+overrideSecretName: ""
+# the key containing the tile secret in the secret
+tileSecretKey: "tile_secret"
+# the key containing the http auth credentials in the secret
+httpAuthKey: "http_auth"
+
+
+image:
+  # The registry to pull c3nav containers from
+  registry: ghcr.io
+  # The repository of the core container
+  repository: c3nav/c3nav-tileserver
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+replicaCount: 1
+
+podAnnotations: {}
+
+podSecurityContext: 
+  runAsNonRoot: true
+  fsGroup: 500
+  fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  runAsUser: 500
+  runAsGroup: 500
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+
+memcached:
+  # memcached cache size in megabytes
+  cacheSize: 128
+  # number of threads
+  threads: ""
+  # extra command line args for memcached
+  extraFlags: ""
+  # extra environment variables
+  extraEnv: []
+
+  image:
+    registry: docker.io
+    repository: bitnami/memcached
+    tag: "1.6.22"
+    pullPolicy: IfNotPresent
+  
+  securityContext:
+    runAsUser: 1001
+    runAsGroup: 0
+
+
+metrics:
+  ## Start a Prometheus exporter sidecar container for the tileserver pod(s)
+  enabled: false
+  # uWSGI Exporter Prometheus Exporter image
+  # ref: https://hub.docker.com/r/timonwong/uwsgi-exporter/tags
+  image:
+    registry: docker.io
+    repository: timonwong/uwsgi-exporter
+    tag: v1.3.0
+    pullPolicy: IfNotPresent
+  
+  extraEnv: []
+
+  securityContext:
+    runAsUser: 1001
+  
+  # Prometheus exporter service parameters
+  service:
+    # uWSGI Prometheus exporter service port
+    port: 9117
+    # Annotations for the Prometheus exporter service
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "{{ .Values.core.metrics.service.port }}"
+  
+  # uWSGI Prometheus exporter resource requests and limits
+  resources:
+    ## Example:
+    ## limits:
+    ##    cpu: 100m
+    ##    memory: 128Mi
+    limits: {}
+    ## Examples:
+    ## requests:
+    ##    cpu: 100m
+    ##    memory: 128Mi
+    requests: {}
+
+# Pod affinity preset. Ignored if affinity is set. Allowed values: soft or hard
+podAffinityPreset: ""
+
+# Pod anti-affinity preset. Ignored if affinity is set. Allowed values: soft or hard
+podAntiAffinityPreset: "soft"
+
+nodeAffinityPreset:
+  # Node affinity preset type. Ignored if affinity is set. Allowed values: soft or hard
+  type: ""
+  # Node label key to match Ignored if affinity is set.
+  key: ""
+  # Node label values to match. Ignored if affinity is set.
+  values: []
+
+# Affinity for pod assignment
+affinity: {}
+
+# Node labels for pod assignment
+nodeSelector: {}
+
+# Tolerations for pod assignment
+tolerations: []
+
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # ingress hosts. Defaults to domains value if unset.
+  hosts: []
+  additionalHosts: []
+  #  - host: chart-example.local
+  #    paths:
+  #      - path: /
+  #        pathType: ImplementationSpecific
+  # enable tls.
+  tls: true
+  # custom tls config. If left empty a default config will automatically be created based on the domains setting.
+  tlsConfig: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+  # protect the ingress with http basic auth. Disabled if empty.
+  # only works if className is set to traefik at the moment.
+  basicAuth: {}
+  #  someuser: "apr1 encrypted password hash"
+  #  otheruser: "apr1 encrypted password hash"
+  # alternativly an existing secret for http basic auth can be provided
+  existingBasicAuthSecret: ""
+  # override the name for the created basic auth secret
+  basicAuthSecretNameOverride: ""
+  # override the name of the basice auth middleware
+  basicAuthMiddlewareNameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""

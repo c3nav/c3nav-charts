@@ -1,0 +1,24 @@
+apiVersion: v2
+name: c3nav-tileserver
+description: c3nav - indoor navigation for events
+home: https://c3nav.de
+icon: https://c3nav.de/assets/helm/icon.png
+maintainers:
+  - name: Jenny Danzmayr
+    email: mail@evilscientress.de
+annotations:
+  category: Webapps
+  licenses: Apache-2.0
+sources:
+  - "https://github.com/c3nav/c3nav-charts"
+
+
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# currently c3nav doens't have releases. Until this changes we use commit hashes as the app version.
+appVersion: "9278b98addb9102c4c993bf6429acab85ace5f82"

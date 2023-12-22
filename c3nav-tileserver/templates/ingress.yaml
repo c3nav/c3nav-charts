@@ -1,0 +1,76 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "c3nav-tileserver.fullname" . -}}
+{{- $defaultHost := include "c3nav-tileserver.defaultDomain" . -}}
+{{- $defaultHosts := (include "c3nav-tileserver.domains" . ) | splitList "," -}}
+{{- $hosts := concat (.Values.ingress.hosts | default $defaultHosts) .Values.ingress.additionalHosts -}}
+{{- $traefik_middlewares := (index .Values.ingress.annotations "traefik.ingress.kubernetes.io/router.middlewares") -}}
+{{- $traefik_auth_middleware := printf "%s-%s@kubernetescrd" .Release.Namespace (include "c3nav-tileserver.traeficBasicAuthMiddlewareName" .) -}}
+{{- if and (eq .Values.ingress.className "traefik") (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) }}
+  {{- if empty $traefik_middlewares }}
+    {{- $_ := set .Values.ingress.annotations "traefik.ingress.kubernetes.io/router.middlewares" $traefik_auth_middleware }}
+  {{- else }}
+    {{- $_ := set .Values.ingress.annotations "traefik.ingress.kubernetes.io/router.middlewares" (printf "%s,%s" $traefik_auth_middleware $traefik_middlewares) }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.ingress.annotations "kubernetes.io/ingress.class" .Values.ingress.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "c3nav-tileserver.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- if .Values.ingress.tlsConfig }}
+    {{- range .Values.ingress.tlsConfig }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+    {{- else }}
+    - hosts:
+        {{- toYaml $hosts | nindent 8 }}
+      secretName: {{ printf "%s-tls" $fullName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $host := $hosts }}
+    - host: {{ $host | quote }}
+      http:
+        paths:
+          - path: /
+            {{- if semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion }}
+            pathType: Prefix
+            {{- end }}
+            backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              service:
+                name: {{ $fullName }}
+                port:
+                  name: http
+              {{- else }}
+              serviceName: {{ $fullName }}
+              servicePort: {{ $.Values.service.port }}
+              {{- end }}
+    {{- end }}
+{{- end }}

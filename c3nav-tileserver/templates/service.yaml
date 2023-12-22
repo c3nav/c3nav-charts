@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "c3nav-tileserver.fullname" . }}
+  labels:
+    {{- include "c3nav-tileserver.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    {{- if .Values.metrics.enabled }}
+    - port: {{ .Values.metrics.service.port }}
+      targetPort: wsgi-metrics
+      protocol: TCP
+      name: wsgi-metrics
+    {{- end }}
+  selector:
+    {{- include "c3nav-tileserver.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: tileserver

@@ -1,0 +1,240 @@
+{{ $component := "tileserver" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "c3nav-tileserver.fullname" . }}
+  labels:
+    {{- include "c3nav-tileserver.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "c3nav-tileserver.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ $component }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: c3nav-tileserver
+        {{- with .Values.podExtraAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "c3nav-tileserver.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ $component }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "c3nav-tileserver.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: c3nav-tileserver
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ printf "%s/%s:%s" .Values.image.registry .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+          env:
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: K8S_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: K8S_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: C3NAV_DEBUG
+              value: {{ .Values.c3nav.debug | quote }}
+            - name: C3NAV_LOGLEVEL
+              value: {{ .Values.c3nav.loglevel | quote }}
+            - name: C3NAV_DATA_DIR
+              value: /c3nav/data
+            - name: C3NAV_RELOAD_INTERVAL
+              value: {{ .Values.c3nav.reloadInterval | default "60" | quote }}
+            - name: C3NAV_UPSTREAM_BASE
+              value: {{ required "c3nav.upstreamBaseURL must be set!" .Values.c3nav.upstreamBaseURL | quote }}
+            - name: C3NAV_TILE_SECRET_FILE
+              value: "/etc/c3nav/tile_secret"
+            - name: C3NAV_MEMCACHED_SERVER
+              value: "/c3nav/memcached.socket"
+            - name: C3NAV_HTTP_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "c3nav-tileserver.secretName" . }}
+                  key: {{ include "c3nav-tileserver.httpAuthKey" . }}
+                  optional: true
+            - name: UWSGI_WORKERS
+              value: {{ .Values.c3nav.uwsgiWorkers | quote }}
+            {{- with .Values.c3nav.extraEnv }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav-tileserver.tileSecretKey" . }}
+            - name: runtime-dir
+              mountPath: /c3nav
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /check
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /check
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: memcached
+          securityContext:
+            {{- toYaml .Values.memcached.securityContext | nindent 12 }}
+          image: "{{ printf "%s/%s:%s" .Values.memcached.image.registry .Values.memcached.image.repository (.Values.memcached.image.tag | default .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.memcached.image.pullPolicy }}
+          args:
+          env:
+            - name: BITNAMI_DEBUG
+              value: {{ ternary "true" "false" .Values.c3nav.debug | quote }}
+            - name: MEMCACHED_EXTRA_FLAGS
+              value: "-s /c3nav/memcached.socket -a 0770{{ with .Values.memcached.extraFlags }} {{ . }}{{ end }}"
+            - name: MEMCACHED_CACHE_SIZE
+              value: {{ .Values.memcached.cacheSize | default "128" | quote }}
+            - name: MEMCACHED_THREADS
+              value: {{ .Values.memcached.threads | quote }}
+            {{- with .Values.memcached.extraEnv }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: runtime-dir
+              mountPath: /c3nav
+          {{- /*
+          livenessProbe:
+            httpGet:
+              path: /check
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /check
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+            */}}
+          resources:
+            {{- if not (empty .Values.memcached.resources) }}
+            {{- toYaml .Values.memcached.resources | nindent 12 }}
+            {{- else }}
+            limits:
+              cpu: 500m
+              memory: {{ add .Values.memcached.cacheSize 128 }}Mi
+            requests:
+              cpu: 250m
+              memory: {{ add .Values.memcached.cacheSize 32 }}Mi
+            {{- end }}
+        {{- if .Values.metrics.enabled }}
+        - name: metrics
+          image: "{{ printf "%s/%s:%s" .Values.metrics.image.registry .Values.metrics.image.repository (.Values.metrics.image.tag | default .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
+          {{- with .Values.metrics.securityContext }}
+          securityContext: {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          args: ['--stats.uri', 'http://127.0.0.1:5000/status']
+          {{- if .Values.metrics.extraEnv }}
+          env:
+            {{- .Values.metrics.extraEnv | toYaml | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: wsgi-metrics
+              containerPort: 9117
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: wsgi-metrics
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: wsgi-metrics
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          {{- if .Values.metrics.resources }}
+          resources: {{- toYaml .Values.metrics.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      volumes:
+        - name: c3nav-secret
+          secret:
+            secretName: {{ include "c3nav-tileserver.secretName" . }}
+        - name: runtime-dir
+          emptyDir:
+            sizeLimit: 32Mi
+            medium: Memory
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+      {{- if .Values.affinity }}
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.podAntiAffinityPreset (empty .Values.affinity.podAntiAffinity) }}
+        podAntiAffinity:
+          {{- if eq .Values.podAntiAffinityPreset "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          {{- end }}
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "c3nav-tileserver.selectorLabels" . | nindent 20 }}
+                    app.kubernetes.io/component: {{ $component }}
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+      {{- end }}
+      {{- if and (not (empty .Values.nodeAffinityPreset.type)) (not (empty .Values.nodeAffinityPreset.key)) (not (empty .Values.nodeAffinityPreset.values)) (empty .Values.affinity.nodeAffinity) }}
+        nodeAffinity:
+          {{- if eq .Values.nodeAffinityPreset.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulungIgnoredDuringExecution:
+          {{- end }}
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: {{ .Values.nodeAffinityPreset.key }}
+                    operator: In
+                    values:
+                      {{- toYaml .Values.nodeAffinityPreset.values | nindent 22 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
