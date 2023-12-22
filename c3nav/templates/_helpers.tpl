@@ -423,7 +423,7 @@ The domains/hostname this instance is for
 */}}
 {{- define "c3nav.domains" -}}
 {{- if not (empty .Values.domains )}}
-{{ join "," .Values.domains }}
+{{- join "," .Values.domains }}
 {{- else }}
 {{- include "c3nav.defaultDomain" . }}
 {{- end }}

@@ -1,7 +1,7 @@
 # Default values for c3nav.
 # This is a YAML-formatted file.
 
-# common paramters
+# common parameters
 
 # Kubernetes Cluster Domain
 clusterDomain: cluster.local
@@ -212,7 +212,7 @@ existingMemcachedSecret: ""
 
 
 image:
-  # The registry to pull c3nav conatiners from
+  # The registry to pull c3nav containers from
   registry: ghcr.io
   # The repository of the core container
   coreRepository: c3nav/c3nav
