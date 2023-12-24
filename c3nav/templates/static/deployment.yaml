@@ -47,7 +47,7 @@ spec:
           env:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
-            - name: C3NAV_DJANGO_STATIC_ROOT
+            - name: C3NAV_STATIC_ROOT
               value: /static/static
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
           volumeMounts:
