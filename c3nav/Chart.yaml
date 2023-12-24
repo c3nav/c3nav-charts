@@ -31,7 +31,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.15
+version: 0.1.16
 
 # currently c3nav doens't have releases. Until this changes we use commit hashes as the app version.
 appVersion: "f23aaf86bf1daaa5a619c468f51557133451f161"
