@@ -38,6 +38,31 @@ spec:
       serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.core.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: c3nav-static-files
+          securityContext:
+            {{- toYaml .Values.core.securityContext | nindent 12 }}
+          image: {{ include "c3nav.images.core" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["python manage.py collectstatic --no-input && python manage.py compress"]
+          env:
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
+          volumeMounts:
+            - name: c3nav-config
+              mountPath: {{ include "c3nav.configPath" . | quote }}
+              subPath: {{ include "c3nav.configKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/django_secret
+              subPath: {{ include "c3nav.djangoSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+            - name: cache
+              mountPath: /cache
       containers:
         - name: c3nav-core
           securityContext:

@@ -38,12 +38,12 @@ spec:
       securityContext:
         {{- toYaml .Values.static.podSecurityContext | nindent 8 }}
       initContainers:
-        - name: c3nav-copy-static-files
+        - name: c3nav-static-files
           securityContext:
             {{- toYaml .Values.core.securityContext | nindent 12 }}
           image: {{ include "c3nav.images.core" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ["python manage.py collectstatic -l --no-input && python manage.py compress"]
+          args: ["python manage.py collectstatic --no-input && python manage.py compress"]
           env:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
