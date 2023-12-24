@@ -49,6 +49,8 @@ spec:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
+            - name: C3NAV_STATIC_ROOT
+              value: /cache/static.dist
           volumeMounts:
             - name: c3nav-config
               mountPath: {{ include "c3nav.configPath" . | quote }}
@@ -74,6 +76,8 @@ spec:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
+            - name: C3NAV_STATIC_ROOT
+              value: /cache/static.dist
             - name: UWSGI_WORKERS
               value: {{ .Values.core.uwsgiWorkers | quote }}
             {{- if .Values.core.extraEnv }}
