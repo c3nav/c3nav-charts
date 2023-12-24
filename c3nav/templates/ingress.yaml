@@ -83,7 +83,7 @@ spec:
                 port:
                   name: http
           {{- end }}
-          {{- with .Values.ingress.extraPaths }}
+          {{- with $.Values.ingress.extraPaths }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
     {{- end }}
