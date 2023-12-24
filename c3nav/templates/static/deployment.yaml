@@ -43,16 +43,29 @@ spec:
             {{- toYaml .Values.core.securityContext | nindent 12 }}
           image: {{ include "c3nav.images.core" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args:
-            - "-O"
-            - "dotglob"
-            - "--"
-            - |
-              cp -Lr --preserve=timestamps /app/c3nav/static.dist /static/
-              mv /static/static.dist /static/static
+          args: ["python manage.py collectstatic -l --no-input && python manage.py compress"]
+          env:
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
+            - name: C3NAV_DJANGO_STATIC_ROOT
+              value: /static/static
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
           volumeMounts:
-            - mountPath: /static
-              name: staticfiles
+            - name: c3nav-config
+              mountPath: {{ include "c3nav.configPath" . | quote }}
+              subPath: {{ include "c3nav.configKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/django_secret
+              subPath: {{ include "c3nav.djangoSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+            - name: cache
+              mountPath: /cache
+            - name: staticfiles
+              mountPath: /static
       containers:
         - name: nginx
           securityContext:
@@ -134,6 +147,21 @@ spec:
         - name: nginx-config
           configMap:
             name: {{ printf "%s-static" (include "c3nav.fullname" .) }}
+        - name: c3nav-config
+          configMap:
+            name: {{ include "c3nav.configMapName" . }}
+        - name: c3nav-secret
+          secret:
+            secretName: {{ include "c3nav.secretName" . }}
+        - name: data
+          {{- if and .Values.persistence.enabled (has "ReadWriteMany" .Values.persistence.accessModes) }}
+          persistentVolumeClaim:
+            claimName: {{ include "c3nav.pvcName" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: cache
+          emptyDir: {}
       affinity:
       {{- if .Values.static.affinity }}
         {{- toYaml .Values.static.affinity | nindent 8 }}
