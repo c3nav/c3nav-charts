@@ -680,6 +680,8 @@ ingress:
   basicAuthSecretNameOverride: ""
   # override the name of the basice auth middleware
   basicAuthMiddlewareNameOverride: ""
+  # add additional path rules to the ingress
+  extraPaths: []
 
 # persistent storage for the data directory
 persistence:
