@@ -412,6 +412,14 @@ The key containing the email (SMTP) password
 
 
 {{/*
+The key containing the hub API secret
+*/}}
+{{- define "c3nav.hubApiSecretKey" -}}
+{{- .Values.hubApiSecretKey | default "hub_api_secret" -}}
+{{- end }}
+
+
+{{/*
 Create the default hostname for the ingress
 */}}
 {{- define "c3nav.defaultDomain" -}}
@@ -534,6 +542,8 @@ The environment variables shared by all c3nav containers, except of the static c
   value: "/etc/c3nav/tile_secret"
 - name: C3NAV_MESH_SECRET_FILE
   value: "/etc/c3nav/mesh_secret"
+- name: C3NAV_HUB_API_SECRET_FILE
+  value: "/etc/c3nav/hub_api_secret"
 - name: C3NAV_DJANGO_ALLOWED_HOSTS
   value: {{ printf "%s,%s" (include "c3nav.allowedHosts" . ) (include "c3nav.allowedHostsRuntime" . ) | quote }}
 - name: C3NAV_DJANGO_REVERSE_PROXY

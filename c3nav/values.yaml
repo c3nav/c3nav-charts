@@ -77,6 +77,10 @@ c3nav:
   # crs_proj4 is the proj4 projection config for converting GPS coordinates to the event space
   crs_proj4: ""
 
+  # hub api
+  hub_api_base: ""
+  hub_api_secret: ""
+
   # database config section
   database:
     # backend is the database backend to use. The use of postgresql is strongly recommended
@@ -198,6 +202,8 @@ celeryBackendKey: "celery_backend"
 emailUserKey: "email_user"
 # the key containing the email (SMTP) password
 emailPasswordKey: "email_password"
+# the key containing the hub API secret
+hubApiSecretKey: "hub_api_secret"
 
 # use an existing secret for the database secret
 existingDatabaseSecret: ""

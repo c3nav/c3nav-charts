@@ -64,6 +64,9 @@ spec:
             - name: c3nav-secret
               mountPath: /etc/c3nav/tile_secret
               subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/hub_api_secret
+              subPath: {{ include "c3nav.hubApiSecretKey" . }}
             - name: data
               mountPath: {{ .Values.persistence.mountPath | quote }}
               {{- if and .Values.persistence.enabled (has "ReadWriteMany" .Values.persistence.accessModes) .Values.persistence.subPath }}
