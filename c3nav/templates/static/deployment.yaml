@@ -13,7 +13,7 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: {{ ternary "50%" "2" (gt .Values.static.replicaCount 3) }}
+      maxSurge: {{ ternary "50%" "2" (gt (int .Values.static.replicaCount) 3) }}
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}
