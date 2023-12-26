@@ -11,6 +11,11 @@ spec:
   {{- if not .Values.tiles.autoscaling.enabled }}
   replicas: {{ .Values.tiles.replicaCount }}
   {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}

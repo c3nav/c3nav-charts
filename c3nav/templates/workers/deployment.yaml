@@ -10,6 +10,11 @@ spec:
   {{- if not .Values.workers.autoscaling.enabled }}
   replicas: {{ .Values.workers.replicaCount }}
   {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
   selector:
     matchLabels:
       {{- include "c3nav.selectorLabels" . | nindent 6 }}
