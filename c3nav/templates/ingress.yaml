@@ -33,6 +33,11 @@ metadata:
   {{- if .Values.ingress.annotations }}
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
   {{- end }}
+  {{- if and (eq .Values.ingress.className "nginx") (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) }}
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: {{ include "c3nav.basicAuthSecretName" . }}
+    nginx.ingress.kubernetes.io/auth-realm: Authentication Required
+  {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}

@@ -7,7 +7,7 @@ metadata:
     {{- include "c3nav.labels" . | nindent 4 }}
 spec:
   basicAuth:
-    secret: {{ include "c3nav.traeficBasicAuthSecretName" . }}
+    secret: {{ include "c3nav.basicAuthSecretName" . }}
     realm: {{ if not (contains "c3nav" .Values.c3nav.name) }}c3nav {{ end }}{{ .Values.c3nav.name }}
     removeHeader: true
 {{- end }}
