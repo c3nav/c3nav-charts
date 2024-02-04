@@ -479,7 +479,7 @@ Create the name of the traefik basic auth middleware
 Create the name of the traefik basic auth secret
 */}}
 {{- define "c3nav.basicAuthSecretName" -}}
-{{- if and (eq .Values.ingress.className "traefik") (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) -}}
+{{- if and (or .Values.ingress.basicAuth .Values.ingress.existingBasicAuthSecret) -}}
 {{- if .Values.ingress.existingBasicAuthSecret }}
 {{ .Values.ingress.existingBasicAuthSecret }}
 {{- else }}
