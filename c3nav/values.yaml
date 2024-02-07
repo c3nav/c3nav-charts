@@ -55,6 +55,8 @@ c3nav:
   # grid_rows
   # grid_cols
 
+  # weather to enable mesh support
+  enable_mesh: true
   # mesh_secret is the secret for the mesh network
   mesh_secret: ""
 

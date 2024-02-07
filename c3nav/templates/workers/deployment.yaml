@@ -50,6 +50,8 @@ spec:
             - name: K8S_SERVICE_NAME
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
+            - name: C3NAV_SERVE_ANYTHING
+              value: "false"
             {{- if .Values.workers.extraEnv }}
             {{- .Values.workers.extraEnv | toYaml | nindent 12 }}
             {{- end }}

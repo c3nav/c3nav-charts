@@ -53,6 +53,8 @@ spec:
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
             - name: UWSGI_WORKERS
               value: {{ .Values.tiles.uwsgiWorkers | quote }}
+            - name: C3NAV_SERVE_API
+              value: "false"
             {{- if .Values.tiles.extraEnv }}
             {{- .Values.tiles.extraEnv | toYaml | nindent 12 }}
             {{- end }}
