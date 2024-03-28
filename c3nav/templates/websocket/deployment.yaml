@@ -1,0 +1,192 @@
+{{- if ne .Values.core.mode "asgi" }}
+{{ $component := "websocket" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-%s" (include "c3nav.fullname" .) $component }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  {{- if not .Values.websocket.autoscaling.enabled }}
+  replicas: {{ .Values.websocket.replicaCount }}
+  {{- end }}
+  {{- if and .Values.persistence.enabled (has "ReadWriteOnce" .Values.persistence.accessModes) }}
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "c3nav.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ $component }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: c3nav-websocket
+        checksum/config: {{ include (print $.Template.BasePath "/c3nav-config.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/c3nav-secret.yaml") . | sha256sum }}
+        {{- with .Values.websocket.podExtraAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "c3nav.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ $component }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.core.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: c3nav-static-files
+          securityContext:
+            {{- toYaml .Values.core.securityContext | nindent 12 }}
+          image: {{ include "c3nav.images.core" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["python manage.py collectstatic --no-input && python manage.py compress"]
+          env:
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) "websocket" | quote }}
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
+            - name: C3NAV_STATIC_ROOT
+              value: /cache/static.dist
+          volumeMounts:
+            - name: c3nav-config
+              mountPath: {{ include "c3nav.configPath" . | quote }}
+              subPath: {{ include "c3nav.configKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/django_secret
+              subPath: {{ include "c3nav.djangoSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+            - name: cache
+              mountPath: /cache
+      containers:
+        - name: c3nav-websocket
+          securityContext:
+            {{- toYaml .Values.core.securityContext | nindent 12 }}
+          image: {{ include "c3nav.images.core" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ['web-async']
+          env:
+            - name: K8S_SERVICE_NAME
+              value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
+            {{- include "c3nav.commonEnvVars" . | nindent 12}}
+            - name: C3NAV_STATIC_ROOT
+              value: /cache/static.dist
+            - name: WEB_CONCURRENCY
+              value: {{ .Values.websocket.workers | quote }}
+            {{- if .Values.websocket.extraEnv }}
+            {{- .Values.websocket.extraEnv | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: c3nav-config
+              mountPath: {{ include "c3nav.configPath" . | quote }}
+              subPath: {{ include "c3nav.configKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/django_secret
+              subPath: {{ include "c3nav.djangoSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/mesh_secret
+              subPath: {{ include "c3nav.meshSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/tile_secret
+              subPath: {{ include "c3nav.tileSecretKey" . }}
+            - name: c3nav-secret
+              mountPath: /etc/c3nav/hub_api_secret
+              subPath: {{ include "c3nav.hubApiSecretKey" . }}
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath | quote }}
+              {{- if and .Values.persistence.enabled .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath | quote }}
+              {{- end }}
+            - name: cache
+              mountPath: /cache
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          resources:
+            {{- toYaml .Values.websocket.resources | nindent 12 }}
+      volumes:
+        - name: c3nav-config
+          configMap:
+            name: {{ include "c3nav.configMapName" . }}
+        - name: c3nav-secret
+          secret:
+            secretName: {{ include "c3nav.secretName" . }}
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "c3nav.pvcName" . }}
+          {{- else }}
+          emptyDir:
+            sizeLimit: 4Gi
+          {{- end }}
+        - name: cache
+          emptyDir:
+            sizeLimit: 1Gi
+      affinity:
+      {{- if .Values.websocket.affinity }}
+        {{- toYaml .Values.websocket.affinity | nindent 8 }}
+      {{- else }}
+        {{- if .Values.websocket.podAntiAffinityPreset }}
+        podAntiAffinity:
+          {{- if eq .Values.websocket.podAntiAffinityPreset "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          {{- end }}
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    {{- include "c3nav.selectorLabels" . | nindent 20 }}
+                    app.kubernetes.io/component: {{ $component }}
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        {{- end }}
+        {{- if and (not (empty .Values.websocket.nodeAffinityPreset.type)) (not (empty .Values.websocket.nodeAffinityPreset.key)) (not (empty .Values.websocket.nodeAffinityPreset.values)) }}
+        nodeAffinity:
+          {{- if eq .Values.websocket.nodeAffinityPreset.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- else }}
+          preferredDuringSchedulungIgnoredDuringExecution:
+          {{- end }}
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: {{ .Values.websocket.nodeAffinityPreset.key }}
+                    operator: In
+                    values:
+                      {{- toYaml .Values.websocket.nodeAffinityPreset.values | nindent 22 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.websocket.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.websocket.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

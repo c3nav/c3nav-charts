@@ -1,0 +1,18 @@
+{{- if ne .Values.core.mode "asgi" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-websocket" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+    app.kubernetes.io/component: websocket
+spec:
+  type: {{ .Values.websocket.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.websocket.service.port }}
+      targetPort: http
+  selector:
+    {{- include "c3nav.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: websocket
+{{- end }}

@@ -70,6 +70,22 @@ spec:
                 name: {{ printf "%s-core" $fullName }}
                 port:
                   name: http
+          {{- if ne .Values.core.mode "asgi" }}
+          - path: /mesh/ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-websocket" $fullName }}
+                port:
+                  name: http
+          - path: /mesh/ui/ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-websocket" $fullName }}
+                port:
+                  name: http
+          {{- end }}
           {{- if $.Values.tiles.enabled }}
           - path: /map
             pathType: Prefix
