@@ -38,6 +38,9 @@ metadata:
     nginx.ingress.kubernetes.io/auth-secret: {{ include "c3nav.basicAuthSecretName" . }}
     nginx.ingress.kubernetes.io/auth-realm: Authentication Required
   {{- end }}
+  {{- if eq .Values.ingress.className "nginx" }}
+    nginx.org/websocket-services: "{{ printf "%s-websocket" $fullName }}"
+  {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
