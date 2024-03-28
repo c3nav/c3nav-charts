@@ -80,7 +80,7 @@ spec:
             - name: C3NAV_STATIC_ROOT
               value: /cache/static.dist
             - name: C3NAV_DATABASE_CONN_MAX_AGE
-              value: 0
+              value: "0"
             - name: WEB_CONCURRENCY
               value: {{ .Values.websocket.workers | quote }}
             {{- if .Values.websocket.extraEnv }}
