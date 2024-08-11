@@ -534,6 +534,9 @@ The environment variables shared by all c3nav containers, except of the static c
 - name: C3NAV_LOG_DIR
   value: "/tmp/logs"
 {{- end }}
+{{- /* we put the tiles filesystem cache into the /tmp emptyDir node local storage for the best performance. */}}
+- name: C3NAV_TILES_ROOT
+  value: "/tmp/tiles"
 - name: C3NAV_AUTOMIGRATE
   value: "no"
 - name: C3NAV_DJANGO_SECRET_FILE
