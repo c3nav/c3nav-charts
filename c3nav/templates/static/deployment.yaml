@@ -66,8 +66,8 @@ spec:
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data
               mountPath: {{ .Values.persistence.mountPath | quote }}
-            - name: cache
-              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
             - name: staticfiles
               mountPath: /static
       containers:
@@ -163,9 +163,10 @@ spec:
             claimName: {{ include "c3nav.pvcName" . }}
           {{- else }}
           emptyDir: {}
-          {{- end }}
-        - name: cache
-          emptyDir: {}
+            sizeLimit: 4Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
       affinity:
       {{- if .Values.static.affinity }}
         {{- toYaml .Values.static.affinity | nindent 8 }}

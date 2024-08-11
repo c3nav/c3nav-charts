@@ -47,8 +47,8 @@ spec:
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data
               mountPath: {{ .Values.persistence.mountPath | quote }}
-            - name: cache
-              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: c3nav-config
           configMap:
@@ -58,7 +58,7 @@ spec:
             secretName: {{ include "c3nav.secretName" . }}
         - name: data
           emptyDir: {}
-        - name: cache
+        - name: tmp
           emptyDir: {}
       affinity:
       {{- if .Values.core.affinity }}

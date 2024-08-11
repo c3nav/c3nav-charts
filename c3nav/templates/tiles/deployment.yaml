@@ -79,8 +79,8 @@ spec:
               {{- if and .Values.persistence.enabled (has "ReadWriteMany" .Values.persistence.accessModes) .Values.persistence.subPath }}
               subPath: {{ .Values.persistence.subPath | quote }}
               {{- end }}
-            - name: cache
-              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
           ports:
             - name: http
               containerPort: 8000
@@ -149,9 +149,9 @@ spec:
           emptyDir:
             sizeLimit: 4Gi
           {{- end }}
-        - name: cache
+        - name: tmp
           emptyDir:
-            sizeLimit: 1Gi
+            sizeLimit: 4Gi
       affinity:
       {{- if .Values.tiles.affinity }}
         {{- toYaml .Values.tiles.affinity | nindent 8 }}

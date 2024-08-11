@@ -528,11 +528,11 @@ The environment variables shared by all c3nav containers, except of the static c
   value: {{ .Values.persistence.mountPath | quote }}
 {{- /*  # disable ephemeral cache dir as we currently need data from it to be shared between pods
 - name: C3NAV_CACHE_ROOT
-  value: "/cache" */}}
+  value: "/tmp/cache" */}}
 {{- if and .Values.persistence.enabled (has "ReadWriteMany" .Values.persistence.accessModes) }}
 {{- /* redirect log output to ephermal cache dir to avoid multiple nodes writing to the same file */}}
 - name: C3NAV_LOG_DIR
-  value: "/cache/logs"
+  value: "/tmp/logs"
 {{- end }}
 - name: C3NAV_AUTOMIGRATE
   value: "no"

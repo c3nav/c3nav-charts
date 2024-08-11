@@ -50,7 +50,7 @@ spec:
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
             - name: C3NAV_STATIC_ROOT
-              value: /cache/static.dist
+              value: /tmp/static.dist
           volumeMounts:
             - name: c3nav-config
               mountPath: {{ include "c3nav.configPath" . | quote }}
@@ -63,8 +63,8 @@ spec:
               subPath: {{ include "c3nav.tileSecretKey" . }}
             - name: data
               mountPath: {{ .Values.persistence.mountPath | quote }}
-            - name: cache
-              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: c3nav-core
           securityContext:
@@ -77,7 +77,7 @@ spec:
               value: {{ printf "%s-%s" (include "c3nav.fullname" .) $component | quote }}
             {{- include "c3nav.commonEnvVars" . | nindent 12}}
             - name: C3NAV_STATIC_ROOT
-              value: /cache/static.dist
+              value: /tmp/static.dist
             - name: UWSGI_WORKERS
               value: {{ .Values.core.uwsgiWorkers | quote }}
             {{- if .Values.core.extraEnv }}
@@ -104,8 +104,8 @@ spec:
               {{- if and .Values.persistence.enabled .Values.persistence.subPath }}
               subPath: {{ .Values.persistence.subPath | quote }}
               {{- end }}
-            - name: cache
-              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
           ports:
             - name: http
               containerPort: 8000
@@ -174,9 +174,9 @@ spec:
           emptyDir:
             sizeLimit: 4Gi
           {{- end }}
-        - name: cache
+        - name: tmp
           emptyDir:
-            sizeLimit: 1Gi
+            sizeLimit: 4Gi
       affinity:
       {{- if .Values.core.affinity }}
         {{- toYaml .Values.core.affinity | nindent 8 }}
