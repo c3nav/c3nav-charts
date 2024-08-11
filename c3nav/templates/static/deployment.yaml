@@ -164,6 +164,7 @@ spec:
           {{- else }}
           emptyDir: {}
             sizeLimit: 4Gi
+          {{- end }}
         - name: tmp
           emptyDir:
             sizeLimit: 1Gi
