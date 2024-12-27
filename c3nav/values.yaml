@@ -159,6 +159,10 @@ c3nav:
     # wether to inject the sentry client into the js
     inject_js: False
 
+
+  hub:
+    cron_schedule: ""
+
 # The domains used for this c3nav instance.
 # Defaults to {{ .Release.Name }}.c3nav.de if unset
 domains: []

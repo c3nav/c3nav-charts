@@ -1,0 +1,90 @@
+{{- if and .Values.c3nav.hub.cron_schedule (not (empty .Values.c3nav.hub.cron_schedule)) }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ printf "%s-hub-cronjob" (include "c3nav.fullname" .) }}
+  labels:
+    {{- include "c3nav.labels" . | nindent 4 }}
+spec:
+  schedule: "{{ .Values.c3nav.hub.cron_schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: {{ printf "%s-hub-conrjob" (include "c3nav.fullname" .) }}
+          labels:
+            {{- include "c3nav.selectorLabels" . | nindent 10 }}
+        spec:
+          {{- with .Values.image.pullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "c3nav.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.core.podSecurityContext | nindent 14 }}
+          restartPolicy: OnFailure
+          backoffLimit: 3
+          containers:
+            - name: c3nav-importhub
+              securityContext:
+                  {{- toYaml .Values.core.securityContext | nindent 16 }}
+              image: {{ include "c3nav.images.core" . }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              args: ["manage", "importhub"]
+              env:
+                - name: K8S_SERVICE_NAME
+                  value: {{ printf "%s-%s" (include "c3nav.fullname" .) "core" | quote }}
+                {{- include "c3nav.commonEnvVars" . | nindent 16}}
+              volumeMounts:
+                - name: c3nav-config
+                  mountPath: {{ include "c3nav.configPath" . | quote }}
+                  subPath: {{ include "c3nav.configKey" . }}
+                - name: c3nav-secret
+                  mountPath: /etc/c3nav/django_secret
+                  subPath: {{ include "c3nav.djangoSecretKey" . }}
+                - name: c3nav-secret
+                  mountPath: /etc/c3nav/tile_secret
+                  subPath: {{ include "c3nav.tileSecretKey" . }}
+                - name: data
+                  mountPath: {{ .Values.persistence.mountPath | quote }}
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: c3nav-config
+              configMap:
+                name: {{ include "c3nav.configMapName" . }}
+            - name: c3nav-secret
+              secret:
+                secretName: {{ include "c3nav.secretName" . }}
+            - name: data
+              emptyDir: {}
+            - name: tmp
+              emptyDir: {}
+          affinity:
+          {{- if .Values.core.affinity }}
+            {{- toYaml .Values.core.affinity | nindent 12 }}
+          {{- else }}
+            {{- if and (not (empty .Values.core.nodeAffinityPreset.type)) (not (empty .Values.core.nodeAffinityPreset.key)) (not (empty .Values.core.nodeAffinityPreset.values)) }}
+            nodeAffinity:
+              {{- if eq .Values.core.nodeAffinityPreset.type "hard" }}
+              requiredDuringSchedulingIgnoredDuringExecution:
+              {{- else }}
+              preferredDuringSchedulungIgnoredDuringExecution:
+              {{- end }}
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: {{ .Values.core.nodeAffinityPreset.key }}
+                        operator: In
+                        values:
+                          {{- toYaml .Values.core.nodeAffinityPreset.values | nindent 26 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.core.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.core.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
