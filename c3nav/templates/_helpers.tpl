@@ -518,6 +518,8 @@ The environment variables shared by all c3nav containers, except of the static c
     fieldRef:
       apiVersion: v1
       fieldPath: status.podIP
+- name: C3NAV_INSTANCE_NAME
+  value: {{ .Values.c3nav.name | quote }}
 - name: C3NAV_DEBUG
   value: {{ .Values.c3nav.debug | quote }}
 - name: C3NAV_LOGLEVEL
