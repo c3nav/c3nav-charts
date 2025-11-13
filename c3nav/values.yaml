@@ -776,6 +776,11 @@ persistence:
   # additional labels for the PVC
   labels: {}
 
+# needed for bitnamilegacy images
+global:
+  security:
+    allowInsecureImage: true
+
 postgresql:
   enabled: true
   # fuck you Broadcom
