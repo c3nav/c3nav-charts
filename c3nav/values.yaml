@@ -776,14 +776,14 @@ persistence:
   # additional labels for the PVC
   labels: {}
 
+# needed for bitnamilegacy images
+global:
+  security:
+    allowInsecureImages: true
 
 postgresql:
   enabled: true
   # fuck you Broadcom
-  global:
-    security:
-      # needed for bitnamilegacy images
-      allowInsecureImage: true
   image:
     repository: bitnamilegacy/postgresql
   architecture: standalone
@@ -796,10 +796,6 @@ postgresql:
 redis:
   enabled: true
   # fuck you Broadcom
-  global:
-    security:
-      # needed for bitnamilegacy images
-      allowInsecureImage: true
   image:
     repository: bitnamilegacy/redis
   architecture: standalone
@@ -813,10 +809,6 @@ redis:
 memcached:
   enabled: true
   # fuck you Broadcom
-  global:
-    security:
-      # needed for bitnamilegacy images
-      allowInsecureImage: true
   image:
     repository: bitnamilegacy/memcached
   auth:
