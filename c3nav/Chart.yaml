@@ -13,15 +13,15 @@ sources:
   - "https://github.com/c3nav/c3nav-charts"
 dependencies:
   - name: postgresql
-    version: 13.x.x
+    version: 16.x.x
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: postgresql.enabled
   - name: redis
-    version: 18.x.x
+    version: 20.x.x
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: redis.enabled
   - name: memcached
-    version: 6.x.x
+    version: 7.x.x
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: memcached.enabled
 
@@ -31,7 +31,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.37
+version: 0.2.0
 
 # currently c3nav doesn't have releases. Until this changes we use commit hashes as the app version.
 appVersion: "38c705717b969c6b36fc4521e82d5226aa76edd9"

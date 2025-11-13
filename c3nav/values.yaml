@@ -605,7 +605,7 @@ static:
 
   image:
     registry: docker.io
-    repository: bitnami/nginx
+    repository: bitnamilegacy/nginx
     tag: "1.25"
     pullPolicy: IfNotPresent
     pullSecrets: []
@@ -663,10 +663,10 @@ static:
     #  Defaults to specified http port
     port: ""
     # Bitnami NGINX Prometheus Exporter image
-    # ref: https://hub.docker.com/r/bitnami/nginx-exporter/tags/
+    # ref: https://hub.docker.com/r/bitnamilegacy/nginx-exporter/tags/
     image:
       registry: docker.io
-      repository: bitnami/nginx-exporter
+      repository: bitnamilegacy/nginx-exporter
       tag: "0.11.0"
       digest: ""
       pullPolicy: IfNotPresent
@@ -778,6 +778,9 @@ persistence:
 
 postgresql:
   enabled: true
+  # fuck you Broadcom
+  image:
+    repository: bitnamilegacy/postgresql
   architecture: standalone
   auth:
     # defaults to c3nav-{{ .Release.Name }}
@@ -787,6 +790,9 @@ postgresql:
 
 redis:
   enabled: true
+  # fuck you Broadcom
+  image:
+    repository: bitnamilegacy/redis
   architecture: standalone
   auth:
     enabled: true
@@ -797,6 +803,9 @@ redis:
 
 memcached:
   enabled: true
+  # fuck you Broadcom
+  image:
+    repository: bitnamilegacy/memcached
   auth:
     enabled: true
     # sadly the value of username is not evaluated as a template so we have to hardcode it
